@@ -7,29 +7,65 @@
 
 
 #include <string>
+#include <vector>
 #include <GL/glew.h>
+#include <unordered_map>
+#include <glm/glm.hpp>
 
 class ShaderProgram {
 private:
     uint32_t program = 0;
-    int32_t attribute_coord2d;
 
-    std::string sourceVertex, sourceFragment;
+    std::string sourceVertex, sourceGeometry, sourceFragment;
+
+    struct VertexAttribute{
+    public:
+        GLint id;
+        GLint size;
+        GLint type;
+        GLint normalized;
+        GLint stride;
+        const void* offset;
+    };
+
+    std::vector<VertexAttribute> vertexAttributes;
+
+    std::unordered_map<const char*, GLint> unifromCache;
+    std::vector<const char*> compileTimeDefinitions;
+
+    GLint getUniformLocation(const char* name);
 public:
+
     [[nodiscard]] uint32_t getProgram() const;
 
     [[nodiscard]] const std::string &getSourceVertex() const;
 
     [[nodiscard]] const std::string &getSourceFragment() const;
 
-    [[nodiscard]] int32_t getAttributeCoord2D() const;
-
-    ShaderProgram(std::string sourceVertex, std::string sourceFragment);
+    ShaderProgram(const char* sourceVertex, const char* sourceGeometry, const char* sourceFragment);
 
     bool init();
 
     void cleanup() const;
-};
 
+    void bind() const;
+
+    void unbind() const;
+
+    void addVertexAttrib(GLint id, GLint size, GLint type, GLint normalized, GLint stride, const void* offset);
+
+    void specifyVertexAttributes();
+
+    void addCompiletimeDefinition(const char* definition);
+
+    void setUniform(const char* name, GLfloat val);
+
+    void setUniform(const char* name, glm::mat4& val);
+
+    //TEXTURE SLOT IS USED FOR SETTING TEXTURES NOT TEXTURE ID
+    void setUniform(const char* name, GLint val);
+
+    void setUniform(const char* name, GLsizei count, const GLint* value);
+};
 
 #endif //MCCPP_SHADERPROGRAM_H

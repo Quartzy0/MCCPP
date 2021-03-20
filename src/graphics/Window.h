@@ -29,5 +29,4 @@ private:
     GLFWwindow* window = nullptr;
 };
 
-
 #endif //MCCPP_WINDOW_H

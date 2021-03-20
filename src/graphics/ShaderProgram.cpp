@@ -4,84 +4,199 @@
 
 #include "ShaderProgram.h"
 
-#include <utility>
-#include <iostream>
+#include <sstream>
+#include <fstream>
+#include "../util/Log.h"
 
-ShaderProgram::ShaderProgram(std::string sourceVertex, std::string sourceFragment) : sourceVertex(std::move(
-        sourceVertex)), sourceFragment(std::move(sourceFragment)) {}
-
-bool ShaderProgram::init() {
-    GLint compile_ok = GL_FALSE, link_ok = GL_FALSE;
-
-    GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-    const char *vs_source =
-            //"#version 100\n"  // OpenGL ES 2.0
-            "#version 150 core\n"  // OpenGL 2.1
-            "in vec2 coord2d;                  "
-            "void main(void) {                        "
-            "  gl_Position = vec4(coord2d, 0.0, 1.0); "
-            "}";
-    glShaderSource(vs, 1, &vs_source, nullptr);
-    glCompileShader(vs);
-    glGetShaderiv(vs, GL_COMPILE_STATUS, &compile_ok);
-    if (!compile_ok) {
-        std::cerr << "Error in vertex shader\n";
-        return false;
+    std::string readFile(const char* filePath){
+        std::fstream fstream;
+        fstream.open(filePath);
+        std::ostringstream oss;
+        oss << fstream.rdbuf();
+        fstream.close();
+        return oss.str();
     }
 
-    GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-    const char *fs_source =
-            //"#version 100\n"  // OpenGL ES 2.0
-            "#version 150 core\n"  // OpenGL 2.1
-            "void main(void) {        "
-            "  gl_FragColor[0] = 1.0; "
-            "  gl_FragColor[1] = 1.0; "
-            "  gl_FragColor[2] = 1.0; "
-            "}";
-    glShaderSource(fs, 1, &fs_source, nullptr);
-    glCompileShader(fs);
-    glGetShaderiv(fs, GL_COMPILE_STATUS, &compile_ok);
-    if (!compile_ok) {
-        std::cerr << "Error in fragment shader\n";
-        return false;
+    ShaderProgram::ShaderProgram(const char* sourceVertex, const char* sourceGeometry, const char* sourceFragment) {
+        this->sourceVertex = readFile(sourceVertex);
+        this->sourceGeometry = readFile(sourceGeometry);
+        this->sourceFragment = readFile(sourceFragment);
     }
 
-    program = glCreateProgram();
-    glAttachShader(program, vs);
-    glAttachShader(program, fs);
-    glLinkProgram(program);
-    glGetProgramiv(program, GL_LINK_STATUS, &link_ok);
-    if (!link_ok) {
-        std::cerr << "Error in glLinkProgram\n";
-        return false;
+
+    bool ShaderProgram::init() {
+        for (const char* def : compileTimeDefinitions){
+            sourceVertex.insert(18, def);
+            sourceGeometry.insert(63, def);
+            sourceFragment.insert(18, def);
+        }
+
+        if (!GLEW_EXT_geometry_shader4){
+            CORE_ERROR("Geometry shaders not supported. Aborting");
+            exit(1);
+        }
+
+        GLint compile_ok = GL_FALSE, link_ok = GL_FALSE;
+
+        //Vertex shader
+        GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+        const char *vs_source = sourceVertex.c_str();
+
+        glShaderSource(vs, 1, &vs_source, nullptr);
+        glCompileShader(vs);
+        glGetShaderiv(vs, GL_COMPILE_STATUS, &compile_ok);
+        if (!compile_ok) {
+            GLint maxLength = 0;
+            glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &maxLength);
+
+            // The maxLength includes the NULL character
+            std::vector<GLchar> errorLog(maxLength);
+            glGetShaderInfoLog(vs, maxLength, &maxLength, &errorLog[0]);
+
+            // Provide the infolog in whatever manor you deem best.
+            // Exit with failure.
+            glDeleteShader(vs); // Don't leak the shader.
+            CORE_ERROR("Error while compiling vertex shader: {}", errorLog.data());
+            return false;
+        }
+
+        //Geometry shader
+        GLuint gs = glCreateShader(GL_GEOMETRY_SHADER_EXT);
+        const char *gs_source = sourceGeometry.c_str();
+
+        glShaderSource(gs, 1, &gs_source, nullptr);
+        glCompileShader(gs);
+        glGetShaderiv(gs, GL_COMPILE_STATUS, &compile_ok);
+        if (!compile_ok) {
+            GLint maxLength = 0;
+            glGetShaderiv(gs, GL_INFO_LOG_LENGTH, &maxLength);
+
+            // The maxLength includes the NULL character
+            std::vector<GLchar> errorLog(maxLength);
+            glGetShaderInfoLog(gs, maxLength, &maxLength, &errorLog[0]);
+
+            // Provide the infolog in whatever manor you deem best.
+            // Exit with failure.
+            glDeleteShader(gs); // Don't leak the shader.
+            CORE_ERROR("Error while compiling geometry shader: {}", errorLog.data());
+            return false;
+        }
+
+        //Fragment shader
+        GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+        const char *fs_source = sourceFragment.c_str();
+
+        glShaderSource(fs, 1, &fs_source, nullptr);
+        glCompileShader(fs);
+        glGetShaderiv(fs, GL_COMPILE_STATUS, &compile_ok);
+        if (!compile_ok) {
+            GLint maxLength = 0;
+            glGetShaderiv(fs, GL_INFO_LOG_LENGTH, &maxLength);
+
+            // The maxLength includes the NULL character
+            std::vector<GLchar> errorLog(maxLength);
+            glGetShaderInfoLog(fs, maxLength, &maxLength, &errorLog[0]);
+
+            // Provide the infolog in whatever manor you deem best.
+            // Exit with failure.
+            glDeleteShader(fs); // Don't leak the shader.
+            CORE_ERROR("Error while compiling fragment shader: {}", errorLog.data());
+            return false;
+        }
+
+        program = glCreateProgram();
+        glAttachShader(program, vs);
+        glAttachShader(program, gs);
+        glAttachShader(program, fs);
+
+        //Geometry shader parameters
+        glProgramParameteriEXT(program, GL_GEOMETRY_INPUT_TYPE_EXT, GL_LINES);
+        glProgramParameteriEXT(program, GL_GEOMETRY_OUTPUT_TYPE_EXT, GL_TRIANGLE_STRIP);
+
+        glLinkProgram(program);
+        glGetProgramiv(program, GL_LINK_STATUS, &link_ok);
+        if (!link_ok) {
+            GLint maxLength = 0;
+            glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
+
+            std::vector<GLchar> errorLog(maxLength);
+            glGetProgramInfoLog(program, maxLength, &maxLength, &errorLog[0]);
+
+            glDeleteProgram(program);
+            CORE_ERROR("Error in glLinkProgram: {}", errorLog.data());
+            return false;
+        }
+
+        specifyVertexAttributes();
+
+        return true;
     }
 
-    const char* attribute_name = "coord2d";
-    attribute_coord2d = glGetAttribLocation(program, attribute_name);
-    if (attribute_coord2d == -1) {
-        std::cerr << "Could not bind attribute " << attribute_name << "\n";
-        return false;
+    uint32_t ShaderProgram::getProgram() const {
+        return program;
     }
 
-    return true;
-}
+    const std::string &ShaderProgram::getSourceVertex() const {
+        return sourceVertex;
+    }
 
-uint32_t ShaderProgram::getProgram() const {
-    return program;
-}
+    const std::string &ShaderProgram::getSourceFragment() const {
+        return sourceFragment;
+    }
 
-const std::string &ShaderProgram::getSourceVertex() const {
-    return sourceVertex;
-}
+    void ShaderProgram::cleanup() const {
+        glDeleteProgram(program);
+    }
 
-const std::string &ShaderProgram::getSourceFragment() const {
-    return sourceFragment;
-}
+    void ShaderProgram::unbind() const{
+        glUseProgram(0);
+    }
 
-int32_t ShaderProgram::getAttributeCoord2D() const {
-    return attribute_coord2d;
-}
+    void ShaderProgram::bind() const {
+        glUseProgram(program);
+    }
 
-void ShaderProgram::cleanup() const {
-    glDeleteProgram(program);
-}
+    void ShaderProgram::addVertexAttrib(GLint id, GLint size, GLint type, GLint normalized, GLint stride, const void* offset) {
+        vertexAttributes.push_back({id, size, type, normalized, stride, offset});
+    }
+
+    void ShaderProgram::specifyVertexAttributes() {
+        for (const VertexAttribute& va : vertexAttributes) {
+            glEnableVertexAttribArray(va.id);
+            glVertexAttribPointer(va.id, va.size, va.type, va.normalized, va.stride, va.offset);
+        }
+    }
+
+    GLint ShaderProgram::getUniformLocation(const char* name) {
+        if (!unifromCache.contains(name)){
+            GLint uniformLocation = glGetUniformLocation(program, name);
+            unifromCache[name] = uniformLocation;
+            return uniformLocation;
+        }
+        return unifromCache[name];
+    }
+
+    void ShaderProgram::setUniform(const char* name, GLfloat val) {
+        GLint uniformLocation = getUniformLocation(name);
+        glUniform1f(uniformLocation, val);
+    }
+
+    void ShaderProgram::setUniform(const char *name, glm::mat4& val) {
+        GLint uniformLocation = getUniformLocation(name);
+        glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, &val[0][0]);
+    }
+
+    //TEXTURE SLOT IS USED FOR SETTING TEXTURES NOT TEXTURE ID
+    void ShaderProgram::setUniform(const char *name, GLint val) {
+        GLint uniformLocation = getUniformLocation(name);
+        glUniform1i(uniformLocation, val);
+    }
+
+    void ShaderProgram::setUniform(const char* name, GLsizei count, const GLint* value) {
+        GLint uniformLocation = getUniformLocation(name);
+        glUniform1iv(uniformLocation, count, value);
+    }
+
+    void ShaderProgram::addCompiletimeDefinition(const char *definition) {
+        compileTimeDefinitions.push_back(definition);
+    }
