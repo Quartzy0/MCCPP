@@ -9,7 +9,7 @@
 #define SCY 8
 #define SCZ 8
 
-#define CHUNK_CULLING
+//#define CHUNK_CULLING
 
 #include "Chunk.h"
 
@@ -17,17 +17,23 @@ class Superchunk {
 private:
     Chunk* chunk[SCX][SCY][SCZ];
     ShaderProgram& shaderProgram;
+    uint8_t tickCount = 0;
+    double lastTickTime = -1;
+
+    void updateChunk(uint32_t x, uint32_t y, uint32_t z);
 public:
 
     Superchunk(ShaderProgram& shaderProgram);
 
     ~Superchunk();
 
-    uint16_t get(int32_t x, int32_t y, int32_t z);
+    Block* get(int32_t x, int32_t y, int32_t z);
 
-    void set(int32_t x, int32_t y, int32_t z, uint16_t type);
+    void set(int32_t x, int32_t y, int32_t z, Block* type);
 
     void render(glm::mat4 vp);
+
+    Chunk* getChunkAt(uint32_t x, uint32_t y, uint32_t z);
 };
 
 

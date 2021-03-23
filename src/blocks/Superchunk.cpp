@@ -20,7 +20,7 @@ Superchunk::~Superchunk() {
     }
 }
 
-uint16_t Superchunk::get(int32_t x, int32_t y, int32_t z) {
+Block* Superchunk::get(int32_t x, int32_t y, int32_t z) {
     int cx = x / CX;
     int cy = y / CY;
     int cz = z / CZ;
@@ -45,7 +45,7 @@ uint16_t Superchunk::get(int32_t x, int32_t y, int32_t z) {
         return chunk[cx][cy][cz]->get(x1, y1, z1);
 }
 
-void Superchunk::set(int32_t x, int32_t y, int32_t z, uint16_t type) {
+void Superchunk::set(int32_t x, int32_t y, int32_t z, Block* type) {
     int cx = x / CX;
     int cy = y / CY;
     int cz = z / CZ;
@@ -65,9 +65,17 @@ void Superchunk::set(int32_t x, int32_t y, int32_t z, uint16_t type) {
     }
 
     if(!chunk[cx][cy][cz])
-        chunk[cx][cy][cz] = new Chunk(shaderProgram);
+        chunk[cx][cy][cz] = new Chunk(shaderProgram, getChunkAt(cx+1, cy, cz), getChunkAt(cx-1, cy, cz),
+                                      getChunkAt(cx, cy+1, cz), getChunkAt(cx, cy-1, cz),
+                                      getChunkAt(cx, cy, cz-1), getChunkAt(cx, cy, cz-1));
 
     chunk[cx][cy][cz]->set(x1, y1, z1, type);
+    if (getChunkAt(cx+1, cy, cz))updateChunk(cx+1, cy, cz);
+    if (getChunkAt(cx-1, cy, cz))updateChunk(cx-1, cy, cz);
+    if (getChunkAt(cx, cy+1, cz))updateChunk(cx, cy+1, cz);
+    if (getChunkAt(cx, cy-1, cz))updateChunk(cx, cy-1, cz);
+    if (getChunkAt(cx, cy, cz+1))updateChunk(cx, cy, cz+1);
+    if (getChunkAt(cx, cy, cz-1))updateChunk(cx, cy, cz-1);
 }
 
 void Superchunk::render(glm::mat4 vp) {
@@ -99,5 +107,18 @@ void Superchunk::render(glm::mat4 vp) {
                 }
             }
         }
+    }
+}
+
+Chunk *Superchunk::getChunkAt(uint32_t x, uint32_t y, uint32_t z) {
+    if (x>=SCX || y>=SCY || z>=SCZ)return nullptr;
+    return chunk[x][y][z];
+}
+
+void Superchunk::updateChunk(uint32_t x, uint32_t y, uint32_t z) {
+    if (getChunkAt(x, y, z)){
+        getChunkAt(x, y, z)->makeNeedUpdate(getChunkAt(x+1, y, z), getChunkAt(x-1, y, z),
+                                            getChunkAt(x, y+1, z), getChunkAt(x, y-1, z),
+                                            getChunkAt(x, y, z+1), getChunkAt(x, y, z-1));
     }
 }

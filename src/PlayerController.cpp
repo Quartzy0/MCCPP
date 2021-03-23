@@ -48,11 +48,11 @@ void PlayerController::tick(float deltaTime) {
             int oz = floorf(actualBlock.z);
 
             if (x!=ox){
-                superchunk.set(x, oy, oz, 1);
+                superchunk.set(x, oy, oz, Block::getBlockById(1));
             }else if(y!=oy){
-                superchunk.set(ox, y, oz, 1);
+                superchunk.set(ox, y, oz, Block::getBlockById(1));
             }else{
-                superchunk.set(ox, oy, z, 1);
+                superchunk.set(ox, oy, z, Block::getBlockById(1));
             }
         }
     }

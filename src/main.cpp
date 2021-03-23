@@ -42,21 +42,23 @@ int main() {
 //        InputManager::setCursorEnabled(false);
 
         TextureAtlas textureAtlas;
-        textureAtlas.load("res/textures/blocks", 32);
+        textureAtlas.load("res/textures/blocks", 64);
 
         Superchunk superchunk(shaderProgram);
 
         PlayerController playerController{camera, superchunk, window};
 
-        uint32_t stone_texture = textureAtlas.getTextureFromName("stone");
-        uint32_t dirt_texture = textureAtlas.getTextureFromName("dirt");
-        uint32_t netherrack_texture = textureAtlas.getTextureFromName("netherrack");
-//        superchunk.set(0, 0, 0, stone_texture);
+        Block::initBlocks(textureAtlas);
+
+        Block* stone = Block::getBlockById(1);
+        Block* dirt = Block::getBlockById(56);
+//        superchunk.set(15, 0, 0, stone);
+//        superchunk.set(16, 0, 0, dirt);
 
 //        for (int k = 0; k < 10; ++k) {
 //            for (int j = 0; j < 10; ++j) {
 //                for (int i = 0; i < 10; ++i) {
-//                    superchunk.set(i, k, j, stone_texture);
+//                    superchunk.set(i+10, k, j, stone);
 //                }
 //            }
 //        }
@@ -70,9 +72,9 @@ int main() {
                         uint32_t yLevel = glm::roundEven((glm::perlin( glm::vec2(x / 8., z / 8. ) ) + 1.0f) * 20 );
                         for (int y = 0; y < yLevel; ++y) {
                             if (y>=yLevel-4){
-                                superchunk.set(x, y, z, dirt_texture);
+                                superchunk.set(x, y, z, dirt);
                             }else{
-                                superchunk.set(x, y, z, stone_texture);
+                                superchunk.set(x, y, z, stone);
                             }
                         }
                     }
@@ -91,11 +93,14 @@ int main() {
         CORE_INFO("Initialized successfully");
 
         double lastTime = glfwGetTime();
+        double lastTickTime = -1;
 
         double lastSecond = glfwGetTime();
         double timeSpent = 0;
 
         uint32_t framesThisSecond = 0;
+
+        uint32_t mcTick = 1;
 
         while (!glfwWindowShouldClose(window.getWindow()))
         {
@@ -110,6 +115,7 @@ int main() {
                 paused = !paused;
             }
 
+            textureAtlas.tick(mcTick);
 
             glm::mat4 vp = camera.getVp();
             shaderProgram.bind();
@@ -134,6 +140,11 @@ int main() {
                 timeSpent = 0;
                 framesThisSecond = 0;
                 lastSecond = glfwGetTime();
+            }
+
+            if (lastTickTime==-1 || glfwGetTime()-lastTickTime>=1.0/20.0){
+                lastTickTime = glfwGetTime();
+                mcTick++;
             }
 
             /* Swap front and back buffers */

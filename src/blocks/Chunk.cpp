@@ -8,7 +8,10 @@
 
 #include "../graphics/Vertex.h"
 
-Chunk::Chunk(ShaderProgram &shaderProgram1) : shaderProgram(shaderProgram1){
+Chunk::Chunk(ShaderProgram &shaderProgram1, Chunk *chunkPosX, Chunk *chunkNegX, Chunk *chunkPosY, Chunk *chunkNegY,
+             Chunk *chunkPosZ, Chunk *chunkNegZ)
+        : shaderProgram(shaderProgram1), chunkPosX(chunkPosX), chunkNegX(chunkNegX), chunkPosY(chunkPosY),
+          chunkNegY(chunkNegY), chunkPosZ(chunkPosZ), chunkNegZ(chunkNegZ) {
     std::memset(block, 0, sizeof(block));
     elements = 0;
     changed = true;
@@ -19,11 +22,11 @@ Chunk::~Chunk() {
     cleanup();
 }
 
-uint16_t Chunk::get(uint32_t x, uint32_t y, uint32_t z) {
+Block* Chunk::get(uint32_t x, uint32_t y, uint32_t z) {
     return block[x][y][z];
 }
 
-void Chunk::set(uint32_t x, uint32_t y, uint32_t z, uint16_t type) {
+void Chunk::set(uint32_t x, uint32_t y, uint32_t z, Block* type) {
     block[x][y][z] = type;
     changed = true;
 }
@@ -39,9 +42,9 @@ void Chunk::update() {
         for (int y = 0; y < CY; y++) {
             bool visible = false;
             for (int z = 0; z < CZ; z++) {
-                uint16_t type = block[x][y][z];
+                Block* type = block[x][y][z];
 
-                if (!type || !(x==0 || !block[x-1][y][z])){
+                if (!type || ((chunkNegX && x==0 && chunkNegX->get(CX-1, y, z)) || (x!=0 && block[x-1][y][z]))){
                     visible = false;
                     continue;
                 }
@@ -50,8 +53,8 @@ void Chunk::update() {
                 if(visible && type == block[x][y][z - 1]) {
                     vertex[i-1].z = z + 1;
                 }else {
-                    vertex[i++] = Vertex(x, y, z, type);
-                    vertex[i++] = Vertex(x, y+1, z+1, type);
+                    vertex[i++] = Vertex(x, y, z, type->getTextures()[0]);
+                    vertex[i++] = Vertex(x, y+1, z+1, type->getTextures()[0]);
                     visible = true;
                 }
             }
@@ -63,9 +66,13 @@ void Chunk::update() {
         for (int y = 0; y < CY; y++) {
             bool visible = false;
             for (int z = 0; z < CZ; z++) {
-                uint16_t type = block[x][y][z];
+                Block* type = block[x][y][z];
 
-                if (!type || !(x==CX-1 || !block[x+1][y][z])){
+                if (type){
+                    uint32_t h = 1;
+                }
+
+                if (!type || ((chunkPosX && x==CX-1 && chunkPosX->get(0, y, z)) || (x!=CX-1 && block[x+1][y][z]))){
                     visible = false;
                     continue;
                 }
@@ -74,8 +81,8 @@ void Chunk::update() {
                 if(visible && type == block[x][y][z - 1]) {
                     vertex[i-1].z = z + 1;
                 }else{
-                    vertex[i++] = Vertex(x+1, y, z, type);
-                    vertex[i++] = Vertex(x+1, y+1, z+1, type);
+                    vertex[i++] = Vertex(x+1, y, z, type->getTextures()[1]);
+                    vertex[i++] = Vertex(x+1, y+1, z+1, type->getTextures()[1]);
                     visible = true;
                 }
             }
@@ -87,9 +94,9 @@ void Chunk::update() {
         for (int y = 0; y < CY; y++) {
             bool visible = false;
             for (int z = 0; z < CZ; z++) {
-                uint16_t type = block[x][y][z];
+                Block* type = block[x][y][z];
 
-                if (!type || !(y==0 || !block[x][y-1][z])){
+                if (!type || ((chunkNegY && y==0 && chunkNegY->get(x, CY-1, z)) || (y!=0 && block[x][y-1][z]))){
                     visible = false;
                     continue;
                 }
@@ -98,8 +105,8 @@ void Chunk::update() {
                 if(visible && type == block[x][y][z - 1]) {
                     vertex[i-1].z = z + 1;
                 }else{
-                    vertex[i++] = Vertex(x, y, z, -type);
-                    vertex[i++] = Vertex(x+1, y, z+1, -type);
+                    vertex[i++] = Vertex(x, y, z, -type->getTextures()[2]);
+                    vertex[i++] = Vertex(x+1, y, z+1, -type->getTextures()[2]);
                     visible = true;
                 }
             }
@@ -111,9 +118,9 @@ void Chunk::update() {
         for (int y = 0; y < CY; y++) {
             bool visible = false;
             for (int z = 0; z < CZ; z++) {
-                uint16_t type = block[x][y][z];
+                Block* type = block[x][y][z];
 
-                if (!type || !((y==CY-1 || !block[x][y+1][z]))){
+                if (!type || ((chunkPosY && y==CY-1 && chunkPosY->get(x, 0, z)) || (y!=CY-1 && block[x][y+1][z]))){
                     visible = false;
                     continue;
                 }
@@ -122,8 +129,8 @@ void Chunk::update() {
                 if(visible && type == block[x][y][z - 1]) {
                     vertex[i-1].z = z + 1;
                 }else {
-                    vertex[i++] = Vertex(x, y+1, z, -type);
-                    vertex[i++] = Vertex(x+1, y+1, z+1, -type);
+                    vertex[i++] = Vertex(x, y+1, z, -type->getTextures()[3]);
+                    vertex[i++] = Vertex(x+1, y+1, z+1, -type->getTextures()[3]);
                     visible = true;
                 }
             }
@@ -135,9 +142,9 @@ void Chunk::update() {
         for (int z = 0; z < CZ; z++) {
             bool visible = false;
             for (int y = 0; y < CY; y++) {
-                uint16_t type = block[x][y][z];
+                Block* type = block[x][y][z];
 
-                if (!type || !(z==0 || !block[x][y][z-1])){
+                if (!type || ((chunkNegZ && z==0 && chunkNegZ->get(x, y, CZ-1)) || (z!=0 && block[x][y][z-1]))){
                     visible = false;
                     continue;
                 }
@@ -146,8 +153,8 @@ void Chunk::update() {
                 if(visible && type == block[x][y - 1][z]) {
                     vertex[i-1].y = y + 1;
                 }else {
-                    vertex[i++] = Vertex(x, y, z, type);
-                    vertex[i++] = Vertex(x+1, y+1, z, type);
+                    vertex[i++] = Vertex(x, y, z, type->getTextures()[4]);
+                    vertex[i++] = Vertex(x+1, y+1, z, type->getTextures()[4]);
                     visible = true;
                 }
             }
@@ -159,9 +166,9 @@ void Chunk::update() {
         for (int z = 0; z < CZ; z++) {
             bool visible = false;
             for (int y = 0; y < CY; y++) {
-                uint16_t type = block[x][y][z];
+                Block* type = block[x][y][z];
 
-                if (!type || !(z==CZ-1 || !block[x][y][z+1])){
+                if (!type || ((chunkPosZ && z==CZ-1 && chunkPosZ->get(x, y, 0)) || (z!=CZ-1 && block[x][y][z+1]))){
                     visible = false;
                     continue;
                 }
@@ -170,8 +177,8 @@ void Chunk::update() {
                 if(visible && type == block[x][y - 1][z]) {
                     vertex[i-1].y = y + 1;
                 }else {
-                    vertex[i++] = Vertex(x, y, z+1, type);
-                    vertex[i++] = Vertex(x+1, y+1, z+1, type);
+                    vertex[i++] = Vertex(x, y, z+1, type->getTextures()[5]);
+                    vertex[i++] = Vertex(x+1, y+1, z+1, type->getTextures()[5]);
                     visible = true;
                 }
             }
@@ -207,4 +214,14 @@ void Chunk::render() {
 
 void Chunk::cleanup() {
     glDeleteBuffers(1, &vbo);
+}
+
+void Chunk::makeNeedUpdate(Chunk* chunkPosX,Chunk* chunkNegX,Chunk* chunkPosY,Chunk* chunkNegY,Chunk* chunkPosZ,Chunk* chunkNegZ) {
+    changed = true;
+    this->chunkPosX = chunkPosX;
+    this->chunkNegX = chunkNegX;
+    this->chunkPosY = chunkPosY;
+    this->chunkNegY = chunkNegY;
+    this->chunkPosZ = chunkPosZ;
+    this->chunkNegZ = chunkNegZ;
 }
