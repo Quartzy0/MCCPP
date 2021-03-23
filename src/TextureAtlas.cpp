@@ -9,6 +9,8 @@
 #include <fstream>
 
 #include <filesystem>
+#include <sstream>
+#include <iostream>
 #include "lodepng/lodepng.h"
 #include "util/Log.h"
 
