@@ -12,6 +12,17 @@
 #include <unordered_map>
 #include <glm/glm.hpp>
 
+struct PointLight{
+    glm::vec3 color;
+    glm::vec3 position;
+
+    float ambient;
+
+    float constantAtt;
+    float linearAtt;
+    float quadAtt;
+};
+
 class ShaderProgram {
 private:
     uint32_t program = 0;
@@ -28,9 +39,11 @@ private:
         const void* offset;
     };
 
+    uint32_t pointLightCount;
+
     std::vector<VertexAttribute> vertexAttributes;
 
-    std::unordered_map<const char*, GLint> unifromCache;
+    std::unordered_map<std::string, GLint> unifromCache;
     std::vector<const char*> compileTimeDefinitions;
 
     GLint getUniformLocation(const char* name);
@@ -44,7 +57,7 @@ public:
 
     ShaderProgram(const char* sourceVertex, const char* sourceGeometry, const char* sourceFragment);
 
-    bool init();
+    bool init(uint32_t pointLightCount);
 
     void cleanup() const;
 
@@ -66,6 +79,8 @@ public:
     void setUniform(const char* name, GLint val);
 
     void setUniform(const char* name, GLsizei count, const GLint* value);
+
+    void setPointLights(PointLight* pointLight, size_t count);
 };
 
 #endif //MCCPP_SHADERPROGRAM_H

@@ -33,7 +33,7 @@ int main() {
         shaderProgram.addVertexAttrib(1, 1, GL_SHORT, GL_FALSE, sizeof(Vertex), (const void*) offsetof(Vertex,textureId));
 
         window.init();
-        shaderProgram.init();
+        shaderProgram.init(16);
 
         Camera camera(window.getWidth(), window.getHeight());
         camera.init(window.getWindow());
@@ -52,8 +52,8 @@ int main() {
 
         Block* stone = Block::getBlockById(1);
         Block* dirt = Block::getBlockById(56);
-//        superchunk.set(15, 0, 0, stone);
-//        superchunk.set(16, 0, 0, dirt);
+//        superchunk.set(2, 0, 0, stone);
+//        superchunk.set(3, 0, 0, dirt);
 
 //        for (int k = 0; k < 10; ++k) {
 //            for (int j = 0; j < 10; ++j) {
@@ -63,13 +63,14 @@ int main() {
 //            }
 //        }
 
+        double startTime = glfwGetTime();
 //        All chunks
-        for (int chunkX = 0; chunkX < SCX; ++chunkX) {
-            for (int chunkZ = 0; chunkZ < SCZ; ++chunkZ) {
+        for (int chunkX = -(SCX/2); chunkX < SCX/2; ++chunkX) {
+            for (int chunkZ = -(SCZ/2); chunkZ < SCZ/2; ++chunkZ) {
                 //chunk perlin noise
                 for (int x = chunkX*CX; x < chunkX*CX+CX; ++x) {
                     for (int z = chunkZ*CZ; z < chunkZ*CZ+CZ; ++z) {
-                        uint32_t yLevel = glm::roundEven((glm::perlin( glm::vec2(x / 8., z / 8. ) ) + 1.0f) * 20 );
+                        int32_t yLevel = glm::roundEven((glm::perlin( glm::vec2(x / 8., z / 8. ) ) + 1.0f) * 20 );
                         for (int y = 0; y < yLevel; ++y) {
                             if (y>=yLevel-4){
                                 superchunk.set(x, y, z, dirt);
@@ -82,7 +83,13 @@ int main() {
             }
         }
 
+        double timeTaken = glfwGetTime()-startTime;
+        std::cout << "Took " << timeTaken << "s\n";
+
         shaderProgram.bind();
+
+        PointLight lights[16];
+        lights[0] = PointLight{glm::vec3{1, 1, 1}, glm::vec3{10, 100, 0}, 1, 1, 0.0008, 0.0001};
 
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_BLEND);
@@ -120,6 +127,7 @@ int main() {
             glm::mat4 vp = camera.getVp();
             shaderProgram.bind();
             shaderProgram.setUniform("textureArray", 0);
+            shaderProgram.setPointLights(lights, 1);
             superchunk.render(vp);
 
             if (!paused){

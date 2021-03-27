@@ -225,3 +225,27 @@ void Chunk::makeNeedUpdate(Chunk* chunkPosX,Chunk* chunkNegX,Chunk* chunkPosY,Ch
     this->chunkPosZ = chunkPosZ;
     this->chunkNegZ = chunkNegZ;
 }
+
+int32_t Chunk::getPosX() const {
+    return posX;
+}
+
+void Chunk::setPosX(int32_t posX) {
+    Chunk::posX = posX;
+}
+
+int32_t Chunk::getPosY() const {
+    return posY;
+}
+
+void Chunk::setPosY(int32_t posY) {
+    Chunk::posY = posY;
+}
+
+int32_t Chunk::getPosZ() const {
+    return posZ;
+}
+
+void Chunk::setPosZ(int32_t posZ) {
+    Chunk::posZ = posZ;
+}

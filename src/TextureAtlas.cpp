@@ -9,7 +9,6 @@
 #include <fstream>
 
 #include <filesystem>
-#include <sstream>
 #include <iostream>
 #include "lodepng/lodepng.h"
 #include "util/Log.h"
@@ -217,14 +216,14 @@ bool TextureAtlas::isAnimated(uint32_t textureIdOriginal) {
 
 void TextureAtlas::tick(uint32_t tick) {
     for (uint32_t texture : animatedTextures){
-        uint8_t nextFrame = (tick / frameTimes[texture]) % frames[texture].size() + 1;
+        uint8_t nextFrame = (tick / frameTimes[texture]) % frames[texture].size();
         glCopyImageSubData(
                 textureId,
                 GL_TEXTURE_2D_ARRAY,
                 0,
                 0,
                 0,
-                texture+nextFrame,
+                texture+frames[texture][nextFrame]+1,
                 textureId,
                 GL_TEXTURE_2D_ARRAY,
                 0,

@@ -3,20 +3,20 @@
 //
 
 #include <cstring>
+#include <exception>
+#include <algorithm>
+#include <execution>
+#include <iostream>
 #include "Superchunk.h"
 #include "../MCCPP.h"
 
 Superchunk::Superchunk(ShaderProgram &shaderProgram) : shaderProgram(shaderProgram) {
-    std::memset(chunk, 0, sizeof(chunk));
+    chunk_list = std::unordered_map<chunk_pos, Chunk*>{};
 }
 
 Superchunk::~Superchunk() {
-    for (int x = 0;x<SCX;x++){
-        for (int y = 0;y<SCY;y++){
-            for (int z = 0; z < SCZ; ++z) {
-                delete chunk[x][y][z];
-            }
-        }
+    for (auto chunk : chunk_list){
+        delete chunk.second;
     }
 }
 
@@ -39,10 +39,11 @@ Block* Superchunk::get(int32_t x, int32_t y, int32_t z) {
         z1+=16;
     }
 
-    if(!chunk[cx][cy][cz])
-        return 0;
+    Chunk* chunk = getChunkAt(cx, cy, cz);
+    if(!chunk)
+        return nullptr;
     else
-        return chunk[cx][cy][cz]->get(x1, y1, z1);
+        return chunk->get(x1, y1, z1);
 }
 
 void Superchunk::set(int32_t x, int32_t y, int32_t z, Block* type) {
@@ -54,22 +55,33 @@ void Superchunk::set(int32_t x, int32_t y, int32_t z, Block* type) {
     int y1 = y % CY;
     int z1 = z % CZ;
 
-    if (x1 < 0){
+    if (x1<0){
         x1+=16;
+        --cx;
     }
-    if (y1 < 0){
+    if (y1<0){
         y1+=16;
+        --cy;
     }
-    if (z1 < 0){
+    if (z1<0){
         z1+=16;
+        --cz;
     }
 
-    if(!chunk[cx][cy][cz])
-        chunk[cx][cy][cz] = new Chunk(shaderProgram, getChunkAt(cx+1, cy, cz), getChunkAt(cx-1, cy, cz),
+    Chunk* chunk = getChunkAt(cx, cy, cz);
+    if(!chunk){
+        Chunk* newChunk = new Chunk(shaderProgram, getChunkAt(cx+1, cy, cz), getChunkAt(cx-1, cy, cz),
                                       getChunkAt(cx, cy+1, cz), getChunkAt(cx, cy-1, cz),
                                       getChunkAt(cx, cy, cz-1), getChunkAt(cx, cy, cz-1));
+        newChunk->setPosX(cx);
+        newChunk->setPosY(cy);
+        newChunk->setPosZ(cz);
+        newChunk->set(x1, y1, z1, type);
+        chunk_list[{cx,cy,cz}] = newChunk;
+    }else{
+        chunk->set(x1, y1, z1, type);
+    }
 
-    chunk[cx][cy][cz]->set(x1, y1, z1, type);
     if (getChunkAt(cx+1, cy, cz))updateChunk(cx+1, cy, cz);
     if (getChunkAt(cx-1, cy, cz))updateChunk(cx-1, cy, cz);
     if (getChunkAt(cx, cy+1, cz))updateChunk(cx, cy+1, cz);
@@ -79,14 +91,14 @@ void Superchunk::set(int32_t x, int32_t y, int32_t z, Block* type) {
 }
 
 void Superchunk::render(glm::mat4 vp) {
-    for (int x = 0; x < SCX; x++) {
-        for (int y = 0; y < SCY; y++) {
-            for (int z = 0; z < SCZ; z++) {
-                if (chunk[x][y][z]) {
-                    glm::mat4 model = glm::translate(glm::mat4(1), glm::vec3(x * CX, y * CY, z * CZ));
-                    glm::mat4 mvp = vp * model;
+    for(auto chunkE : chunk_list){
+        Chunk* chunk = chunkE.second;
+        if (chunk) {
+            glm::mat4 model = glm::translate(glm::mat4(1), glm::vec3(chunk->getPosX() * CX, chunk->getPosY() * CY, chunk->getPosZ() * CZ));
 
 #ifdef CHUNK_CULLING
+            glm::mat4 mvp = vp * model;
+
                     // Is this chunk on the screen?
                     glm::vec4 center = mvp * glm::vec4(CX / 2, CY / 2, CZ / 2, 1);
 
@@ -102,23 +114,36 @@ void Superchunk::render(glm::mat4 vp) {
                         continue;
 #endif
 
-                    shaderProgram.setUniform("mvp", mvp);
-                    chunk[x][y][z]->render();
-                }
-            }
+            shaderProgram.setUniform("vp", vp);
+            shaderProgram.setUniform("m", model);
+            chunk->render();
         }
     }
 }
 
-Chunk *Superchunk::getChunkAt(uint32_t x, uint32_t y, uint32_t z) {
-    if (x>=SCX || y>=SCY || z>=SCZ)return nullptr;
-    return chunk[x][y][z];
-}
-
-void Superchunk::updateChunk(uint32_t x, uint32_t y, uint32_t z) {
-    if (getChunkAt(x, y, z)){
-        getChunkAt(x, y, z)->makeNeedUpdate(getChunkAt(x+1, y, z), getChunkAt(x-1, y, z),
+void Superchunk::updateChunk(int32_t x, int32_t y, int32_t z) {
+    Chunk* chunk = getChunkAt(x,y,z);
+    if (chunk){
+        chunk->makeNeedUpdate(getChunkAt(x+1, y, z), getChunkAt(x-1, y, z),
                                             getChunkAt(x, y+1, z), getChunkAt(x, y-1, z),
                                             getChunkAt(x, y, z+1), getChunkAt(x, y, z-1));
     }
+}
+
+Chunk *Superchunk::getChunk(int32_t x, int32_t y, int32_t z) {
+    /*if (last != nullptr){
+        if (last->getPosX()==x && last->getPosY()==y && last->getPosZ()==z){
+            return last;
+        }
+    }
+//    auto foundChunk = std::find_if(std::execution::seq, chunks.begin(), chunks.end(), [x,y,z](Chunk* chunkIn){
+//        return chunkIn->getPosX()==x && chunkIn->getPosY()==y && chunkIn->getPosZ()==z;
+//    });
+    for (Chunk* chunk : chunks){
+        if (chunk->getPosX()==x && chunk->getPosY()==y && chunk->getPosZ()==z){
+            last = chunk;
+            return chunk;
+        }
+    }
+    return nullptr;*/
 }

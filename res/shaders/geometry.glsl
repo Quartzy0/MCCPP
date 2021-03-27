@@ -8,12 +8,11 @@ flat in float textureId_geo[];
 
 out vec4 texcoord;
 flat out float frag_textureId;
+out vec3 normal;
+out vec3 positionFrag;
 
-uniform mat4 mvp;
-
-vec4 whenEq(vec4 x, vec4 y){
-    return 1.0 - abs(sign(x-y));
-}
+uniform mat4 vp;
+uniform mat4 m;
 
 void main() {
     // Two input vertices will be the first and last vertex of the quad
@@ -32,25 +31,17 @@ void main() {
         c.xz = d.xz;
     }
 
-    //  Janovo sranje tukaj
-    // Fancy if
-//    float ay_is_not_dy = abs(sign(a.y - d.y));
-//    b.x = d.x * (1.0 - ay_is_not_dy) + b.x * ay_is_not_dy;
-//    b.y = d.y * ay_is_not_dy + b.y * (1.0 - ay_is_not_dy);
-//    c.x = c.x * (1.0 - ay_is_not_dy) + ay_is_not_dy * d.x;
-//    c.z = d.z;
-
-    //  Konec Janovega sranja
-
     // Emit the vertices of the quad
     frag_textureId = textureId_geo[0];
 
-    texcoord = a; gl_Position = mvp * vec4(a.xyz, 1); EmitVertex();
-    texcoord = c; gl_Position = mvp * vec4(c.xyz, 1); EmitVertex();
-    texcoord = d; gl_Position = mvp * vec4(d.xyz, 1); EmitVertex();
+    normal = normalize(cross(a.xyz - b.xyz, b.xyz - c.xyz));
 
-    texcoord = d; gl_Position = mvp * vec4(d.xyz, 1); EmitVertex();
-    texcoord = b; gl_Position = mvp * vec4(b.xyz, 1); EmitVertex();
-    texcoord = a; gl_Position = mvp * vec4(a.xyz, 1); EmitVertex();
+    texcoord = a; gl_Position = vp * m * vec4(a.xyz, 1); positionFrag = (m*a).xyz; EmitVertex();
+    texcoord = c; gl_Position = vp * m * vec4(c.xyz, 1); positionFrag = (m*c).xyz; EmitVertex();
+    texcoord = d; gl_Position = vp * m * vec4(d.xyz, 1); positionFrag = (m*d).xyz; EmitVertex();
+
+    texcoord = d; gl_Position = vp * m * vec4(d.xyz, 1); positionFrag = (m*d).xyz; EmitVertex();
+    texcoord = b; gl_Position = vp * m * vec4(b.xyz, 1); positionFrag = (m*b).xyz; EmitVertex();
+    texcoord = a; gl_Position = vp * m * vec4(a.xyz, 1); positionFrag = (m*a).xyz; EmitVertex();
     EndPrimitive();
 }

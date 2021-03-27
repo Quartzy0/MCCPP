@@ -14,6 +14,13 @@
 #define CY 16
 #define CZ 16
 
+class Position{
+public:
+    int32_t x, y ,z;
+
+    Position() = default;
+    ~Position() = default;
+};
 
 class Chunk {
 private:
@@ -22,6 +29,7 @@ private:
     uint32_t elements;
     bool changed;
     ShaderProgram& shaderProgram;
+    int32_t posX,posY,posZ;
 
     Chunk* chunkPosX;
     Chunk* chunkNegX;
@@ -32,6 +40,8 @@ private:
 public:
     Chunk(ShaderProgram &shaderProgram1, Chunk *chunkPosX, Chunk *chunkNegX, Chunk *chunkPosY, Chunk *chunkNegY,
           Chunk *chunkPosZ, Chunk *chunkNegZ);
+
+    Chunk() = default;
 
     ~Chunk();
 
@@ -46,6 +56,18 @@ public:
     void cleanup();
 
     void makeNeedUpdate(Chunk* chunkPosX,Chunk* chunkNegX,Chunk* chunkPosY,Chunk* chunkNegY,Chunk* chunkPosZ,Chunk* chunkNegZ);
+
+    int32_t getPosX() const;
+
+    void setPosX(int32_t posX);
+
+    int32_t getPosY() const;
+
+    void setPosY(int32_t posY);
+
+    int32_t getPosZ() const;
+
+    void setPosZ(int32_t posZ);
 };
 
 
