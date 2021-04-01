@@ -8,58 +8,25 @@
 #include <cmath>
 
 void Camera::tick(float deltaTime) {
-    double xpos, ypos;
-    glfwGetCursorPos(windowHandle, &xpos, &ypos);
-
-    glfwSetCursorPos(windowHandle, windowWidth/2.0, windowHeight/2.0);
-
-    horizontalAngle += mouseSpeed * deltaTime * float(windowWidth/2.0 - xpos );
-    verticalAngle   += mouseSpeed * deltaTime * float( windowHeight/2.0 - ypos );
-
-    glm::vec3 direction(
+    direction = glm::vec3{
             std::cos(verticalAngle) * std::sin(horizontalAngle),
             std::sin(verticalAngle),
             std::cos(verticalAngle) * std::cos(horizontalAngle)
-    );
+    };
 
-    glm::vec3 moveDirection(
+    moveDirection = glm::vec3{
             std::sin(horizontalAngle),
             0,
             std::cos(horizontalAngle)
-            );
+    };
 
-    glm::vec3 right = glm::vec3(
+    right = glm::vec3{
             std::sin(horizontalAngle - 3.14f/2.0f),
             0,
             std::cos(horizontalAngle - 3.14f/2.0f)
-    );
+    };
 
-    glm::vec3 up = glm::cross( right, direction );
-
-    // Move forward
-    if (glfwGetKey(windowHandle, GLFW_KEY_W ) == GLFW_PRESS){
-        cameraPos += moveDirection * deltaTime * speed;
-    }
-    // Move backward
-    if (glfwGetKey(windowHandle, GLFW_KEY_S ) == GLFW_PRESS){
-        cameraPos -= moveDirection * deltaTime * speed;
-    }
-    // Strafe right
-    if (glfwGetKey(windowHandle, GLFW_KEY_D ) == GLFW_PRESS){
-        cameraPos += right * deltaTime * speed;
-    }
-    // Strafe left
-    if (glfwGetKey(windowHandle, GLFW_KEY_A ) == GLFW_PRESS){
-        cameraPos -= right * deltaTime * speed;
-    }
-
-    if (glfwGetKey(windowHandle, GLFW_KEY_SPACE ) == GLFW_PRESS){
-        cameraPos += glm::vec3(0, 1, 0) * deltaTime * speed;
-    }
-
-    if (glfwGetKey(windowHandle, GLFW_KEY_LEFT_SHIFT ) == GLFW_PRESS){
-        cameraPos -= glm::vec3(0, 1, 0) * deltaTime * speed;
-    }
+    up = glm::cross( right, direction );
 
     proj = glm::perspective(glm::radians(fov), 1280.0f / 720.0f, 0.1f, 100.0f);
 // Camera matrix
@@ -76,22 +43,6 @@ Camera::Camera(GLint windowWidth, GLint windowHeight) : windowWidth(windowWidth)
                                                         windowHeight(windowHeight),
                                                         cameraPos(0, 0, 2){
 
-}
-
-float Camera::getMouseSpeed() const {
-    return mouseSpeed;
-}
-
-void Camera::setMouseSpeed(float mouseSpeed) {
-    Camera::mouseSpeed = mouseSpeed;
-}
-
-float Camera::getSpeed() const {
-    return speed;
-}
-
-void Camera::setSpeed(float speed) {
-    Camera::speed = speed;
 }
 
 void Camera::init(GLFWwindow *windowHandle) {
@@ -127,9 +78,45 @@ float Camera::getFov() const {
 }
 
 glm::vec3 Camera::lookDirection() {
-    return glm::vec3(
-            std::cos(verticalAngle) * std::sin(horizontalAngle),
-            std::sin(verticalAngle),
-            std::cos(verticalAngle) * std::cos(horizontalAngle)
-    );
+    return direction;
+}
+
+void Camera::setCameraPos(glm::vec3 cameraPos) {
+    Camera::cameraPos = cameraPos;
+}
+
+void Camera::setHorizontalAngle(float horizontalAngle) {
+    Camera::horizontalAngle = horizontalAngle;
+}
+
+void Camera::setVerticalAngle(float verticalAngle) {
+    Camera::verticalAngle = verticalAngle;
+}
+
+GLFWwindow *Camera::getWindowHandle() const {
+    return windowHandle;
+}
+
+const glm::vec3 &Camera::getRight() const {
+    return right;
+}
+
+const glm::vec3 &Camera::getUp() const {
+    return up;
+}
+
+const glm::vec3 &Camera::getMoveDirection() const {
+    return moveDirection;
+}
+
+const glm::vec3 &Camera::getDirection() const {
+    return direction;
+}
+
+GLint Camera::getWindowWidth() const {
+    return windowWidth;
+}
+
+GLint Camera::getWindowHeight() const {
+    return windowHeight;
 }

@@ -8,11 +8,41 @@
 
 #include "glm/gtx/intersect.hpp"
 
-float dti(float val) {
-    return fabsf(val - roundf(val));
-}
-
 void PlayerController::tick(float deltaTime) {
+    double xpos, ypos;
+    glfwGetCursorPos(camera.getWindowHandle(), &xpos, &ypos);
+
+    glfwSetCursorPos(camera.getWindowHandle(), camera.getWindowWidth()/2.0, camera.getWindowHeight()/2.0);
+
+    camera.setHorizontalAngle(camera.getHorizontalAngle() + mouseSpeed * deltaTime * float(camera.getWindowWidth()/2.0 - xpos ));
+    camera.setVerticalAngle(camera.getVerticalAngle() + mouseSpeed * deltaTime * float( camera.getWindowHeight()/2.0 - ypos ));
+
+    // Move forward
+    if (glfwGetKey(camera.getWindowHandle(), GLFW_KEY_W ) == GLFW_PRESS){
+        pos += camera.getMoveDirection() * deltaTime * flySpeed;
+    }
+    // Move backward
+    if (glfwGetKey(camera.getWindowHandle(), GLFW_KEY_S ) == GLFW_PRESS){
+        pos -= camera.getMoveDirection() * deltaTime * flySpeed;
+    }
+    // Strafe right
+    if (glfwGetKey(camera.getWindowHandle(), GLFW_KEY_D ) == GLFW_PRESS){
+        pos += camera.getRight() * deltaTime * flySpeed;
+    }
+    // Strafe left
+    if (glfwGetKey(camera.getWindowHandle(), GLFW_KEY_A ) == GLFW_PRESS){
+        pos -= camera.getRight() * deltaTime * flySpeed;
+    }
+
+    if (glfwGetKey(camera.getWindowHandle(), GLFW_KEY_SPACE ) == GLFW_PRESS){
+        pos += glm::vec3(0, 1, 0) * deltaTime * flySpeed;
+    }
+
+    if (glfwGetKey(camera.getWindowHandle(), GLFW_KEY_LEFT_SHIFT ) == GLFW_PRESS){
+        pos -= glm::vec3(0, 1, 0) * deltaTime * flySpeed;
+    }
+
+    camera.setCameraPos(pos);
     camera.tick(deltaTime);
 
     //Block breaking
@@ -153,3 +183,103 @@ glm::vec3 PlayerController::getLookingBlock(bool blockBefore) {
 PlayerController::PlayerController(Camera &camera, Superchunk &superchunk, Window &window) : camera(camera),
                                                                                              superchunk(superchunk),
                                                                                              window(window) {}
+
+int32_t PlayerController::getX() const {
+    return PlayerController::pos.x;
+}
+
+void PlayerController::setX(int32_t x) {
+    PlayerController::pos.x = x;
+}
+
+int32_t PlayerController::getY() const {
+    return PlayerController::pos.y;
+}
+
+void PlayerController::setY(int32_t y) {
+    PlayerController::pos.y = y;
+}
+
+int32_t PlayerController::getZ() const {
+    return PlayerController::pos.z;
+}
+
+void PlayerController::setZ(int32_t z) {
+    PlayerController::pos.z = z;
+}
+
+uint8_t PlayerController::getSelectedSlot() const {
+    return selectedSlot;
+}
+
+void PlayerController::setSelectedSlot(uint8_t selectedSlot) {
+    PlayerController::selectedSlot = selectedSlot;
+}
+
+const glm::vec<3, double, glm::defaultp> &PlayerController::getPos() const {
+    return pos;
+}
+
+float PlayerController::getMouseSpeed() const {
+    return mouseSpeed;
+}
+
+void PlayerController::setMouseSpeed(float mouseSpeed) {
+    PlayerController::mouseSpeed = mouseSpeed;
+}
+
+float PlayerController::getFlySpeed() const {
+    return flySpeed;
+}
+
+void PlayerController::setFlySpeed(float flySpeed) {
+    PlayerController::flySpeed = flySpeed;
+}
+
+float PlayerController::getWalkSpeed() const {
+    return walkSpeed;
+}
+
+void PlayerController::setWalkSpeed(float walkSpeed) {
+    PlayerController::walkSpeed = walkSpeed;
+}
+
+bool PlayerController::isInvulnerable() const {
+    return invulnerable;
+}
+
+void PlayerController::setInvulnerable(bool invulnerable) {
+    PlayerController::invulnerable = invulnerable;
+}
+
+bool PlayerController::isFlying() const {
+    return flying;
+}
+
+void PlayerController::setFlying(bool flying) {
+    PlayerController::flying = flying;
+}
+
+bool PlayerController::isAllowFlight() const {
+    return allowFlight;
+}
+
+void PlayerController::setAllowFlight(bool allowFlight) {
+    PlayerController::allowFlight = allowFlight;
+}
+
+bool PlayerController::isCreative() const {
+    return creative;
+}
+
+void PlayerController::setCreative(bool creative) {
+    PlayerController::creative = creative;
+}
+
+void PlayerController::setPos(const glm::vec<3, double, glm::defaultp> &pos) {
+    PlayerController::pos = pos;
+}
+
+Camera &PlayerController::getCamera() const {
+    return camera;
+}

@@ -24,10 +24,7 @@ ShaderProgram::ShaderProgram(const char* sourceVertex, const char* sourceGeometr
 }
 
 
-bool ShaderProgram::init(uint32_t pointLightCount) {
-    this->pointLightCount = pointLightCount;
-    std::string str = "#define POINT_LIGHT_COUNT " + std::to_string(pointLightCount);
-    compileTimeDefinitions.push_back(str.c_str());
+bool ShaderProgram::init() {
     for (const char* def : compileTimeDefinitions){
         sourceVertex.insert(18, def);
         sourceGeometry.insert(63, def);
@@ -207,42 +204,7 @@ void ShaderProgram::addCompiletimeDefinition(const char *definition) {
     compileTimeDefinitions.push_back(definition);
 }
 
-void ShaderProgram::setPointLights(PointLight *pointLight, size_t count) {
-    if (count>pointLightCount){
-        CORE_WARN("More point lights were provided than could be used");
-    }
-    static char buffer[64];
-    for (int i = 0; i < pointLightCount; ++i) {
-        sprintf(buffer, "pointLights[%u].vColor",i);
-        GLuint location_color = getUniformLocation(buffer);
-        sprintf(buffer, "pointLights[%u].vPosition",i);
-        GLuint location_position = getUniformLocation(buffer);
-        sprintf(buffer, "pointLights[%u].fAmbient",i);
-        GLuint location_ambient = getUniformLocation(buffer);
-        sprintf(buffer, "pointLights[%u].fConstantAtt",i);
-        GLuint location_constantAtt = getUniformLocation(buffer);
-        sprintf(buffer, "pointLights[%u].fLinearAtt",i);
-        GLuint location_linearAtt = getUniformLocation(buffer);
-        sprintf(buffer, "pointLights[%u].fExpAtt",i);
-        GLuint location_quadAtt = getUniformLocation(buffer);
-        if (i>=count){
-            glUniform3f(location_color, 0, 0, 0);
-            glUniform3f(location_position, 0, 0, 0);
-
-            glUniform1f(location_ambient, 0);
-
-            glUniform1f(location_constantAtt, 1);
-            glUniform1f(location_linearAtt, 0);
-            glUniform1f(location_quadAtt, 0);
-        }else{
-            glUniform3f(location_color, pointLight[i].color.r, pointLight[i].color.g, pointLight[i].color.b);
-            glUniform3f(location_position, pointLight[i].position.x, pointLight[i].position.y, pointLight[i].position.z);
-
-            glUniform1f(location_ambient, pointLight[i].ambient);
-
-            glUniform1f(location_constantAtt, pointLight[i].constantAtt);
-            glUniform1f(location_linearAtt, pointLight[i].linearAtt);
-            glUniform1f(location_quadAtt, pointLight[i].quadAtt);
-        }
-    }
+void ShaderProgram::setUniformLightLevels(uint32_t *lightLevels, size_t size) {
+    GLint loc = getUniformLocation("lightLevels");
+    glUniform1uiv(loc, size, (const GLuint*) lightLevels);
 }

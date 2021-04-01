@@ -6,10 +6,15 @@
 #include "TextureAtlas.h"
 #include "graphics/Vertex.h"
 #include "util/InputManager.h"
+#include "util/Log.h"
+#include "network/NetworkManager.h"
+#include "network/packet/login/PacketHandshake.h"
+#include "network/packet/login/PacketLoginStart.h"
+#include "network/HTTPRequest.hpp"
 
 #include <glm/gtc/noise.hpp>
 
-using namespace MCCPP;
+using namespace network;
 
 bool paused = false;
 
@@ -21,10 +26,43 @@ void debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsi
     printf("%s\n", message);
 }
 
-int main() {
+int to_int(char const *s)
+{
+    if ( s == NULL || *s == '\0' )
+        throw std::invalid_argument("null or empty string argument");
+
+    bool negate = (s[0] == '-');
+    if ( *s == '+' || *s == '-' )
+        ++s;
+
+    if ( *s == '\0')
+        throw std::invalid_argument("sign character only.");
+
+    int result = 0;
+    while(*s)
+    {
+        if ( *s < '0' || *s > '9' )
+            throw std::invalid_argument("invalid input string");
+        result = result * 10  - (*s - '0');  //assume negative number
+        ++s;
+    }
+    return negate ? result : -result; //-result is positive!
+}
+
+int main(int argc, char** argv) {
     try{
         Log::init();
-        CORE_ERROR("HELLO!");
+
+//        if (argc>=5){
+//            CORE_ERROR("Need 5 arguments: [Username] [UUID] [AuthToken] [ServerIP] [ServerPort]");
+//            exit(1);
+//        }
+        MCCPP::username = std::string{argv[1]};
+        MCCPP::uuid = std::string{argv[2]};
+        MCCPP::authToken = std::string{argv[3]};
+        MCCPP::serverIP = std::string{argv[4]};
+        MCCPP::port = to_int(argv[5]);
+
 
         Window window = Window("Test", 1280, 720);
         ShaderProgram shaderProgram = ShaderProgram("res/shaders/vertex.glsl", "res/shaders/geometry.glsl", "res/shaders/fragment.glsl");
@@ -33,7 +71,7 @@ int main() {
         shaderProgram.addVertexAttrib(1, 1, GL_SHORT, GL_FALSE, sizeof(Vertex), (const void*) offsetof(Vertex,textureId));
 
         window.init();
-        shaderProgram.init(16);
+        shaderProgram.init();
 
         Camera camera(window.getWidth(), window.getHeight());
         camera.init(window.getWindow());
@@ -48,6 +86,9 @@ int main() {
 
         PlayerController playerController{camera, superchunk, window};
 
+        MCCPP::playerController = &playerController;
+        MCCPP::superchunk = &superchunk;
+
         Block::initBlocks(textureAtlas);
 
         Block* stone = Block::getBlockById(1);
@@ -55,41 +96,34 @@ int main() {
 //        superchunk.set(2, 0, 0, stone);
 //        superchunk.set(3, 0, 0, dirt);
 
-//        for (int k = 0; k < 10; ++k) {
-//            for (int j = 0; j < 10; ++j) {
-//                for (int i = 0; i < 10; ++i) {
-//                    superchunk.set(i+10, k, j, stone);
-//                }
-//            }
-//        }
-
-        double startTime = glfwGetTime();
-//        All chunks
-        for (int chunkX = -(SCX/2); chunkX < SCX/2; ++chunkX) {
-            for (int chunkZ = -(SCZ/2); chunkZ < SCZ/2; ++chunkZ) {
-                //chunk perlin noise
-                for (int x = chunkX*CX; x < chunkX*CX+CX; ++x) {
-                    for (int z = chunkZ*CZ; z < chunkZ*CZ+CZ; ++z) {
-                        int32_t yLevel = glm::roundEven((glm::perlin( glm::vec2(x / 8., z / 8. ) ) + 1.0f) * 20 );
-                        for (int y = 0; y < yLevel; ++y) {
-                            if (y>=yLevel-4){
-                                superchunk.set(x, y, z, dirt);
-                            }else{
-                                superchunk.set(x, y, z, stone);
-                            }
-                        }
-                    }
+        for (int k = 0; k < 10; ++k) {
+            for (int j = 0; j < 10; ++j) {
+                for (int i = 0; i < 10; ++i) {
+                    superchunk.set(i-236, k+32, j+256, stone);
                 }
             }
         }
 
-        double timeTaken = glfwGetTime()-startTime;
-        std::cout << "Took " << timeTaken << "s\n";
+//        All chunks
+//        for (int chunkX = -(SCX/2); chunkX < SCX/2; ++chunkX) {
+//            for (int chunkZ = -(SCZ/2); chunkZ < SCZ/2; ++chunkZ) {
+//                //chunk perlin noise
+//                for (int x = chunkX*CX; x < chunkX*CX+CX; ++x) {
+//                    for (int z = chunkZ*CZ; z < chunkZ*CZ+CZ; ++z) {
+//                        int32_t yLevel = glm::roundEven((glm::perlin( glm::vec2(x / 8., z / 8. ) ) + 1.0f) * 20 );
+//                        for (int y = 0; y < yLevel; ++y) {
+//                            if (y>=yLevel-4){
+//                                superchunk.set(x-236, y+32, z+256, dirt);
+//                            }else{
+//                                superchunk.set(x-236, y+32, z+256, stone);
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
         shaderProgram.bind();
-
-        PointLight lights[16];
-        lights[0] = PointLight{glm::vec3{1, 1, 1}, glm::vec3{10, 100, 0}, 1, 1, 0.0008, 0.0001};
 
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_BLEND);
@@ -99,11 +133,28 @@ int main() {
 
         CORE_INFO("Initialized successfully");
 
+
+        CORE_INFO("Attempting to connect to {}:{}", MCCPP::serverIP, MCCPP::port);
+        http::init();
+        NetworkManager::init(MCCPP::serverIP.c_str(), MCCPP::port);
+
+        NetworkManager::setState(State::HANDSHAKE);
+
+        PacketHandshake packetHandshake{47, MCCPP::serverIP, MCCPP::port, 2};
+        NetworkManager::sendPacket(packetHandshake);
+        NetworkManager::setState(State::LOGIN);
+
+        PacketLoginStart packetLoginStart{MCCPP::username};
+        NetworkManager::sendPacket(packetLoginStart);
+
+
+
         double lastTime = glfwGetTime();
         double lastTickTime = -1;
 
         double lastSecond = glfwGetTime();
         double timeSpent = 0;
+        double longestFrame = 0;
 
         uint32_t framesThisSecond = 0;
 
@@ -127,26 +178,30 @@ int main() {
             glm::mat4 vp = camera.getVp();
             shaderProgram.bind();
             shaderProgram.setUniform("textureArray", 0);
-            shaderProgram.setPointLights(lights, 1);
+            shaderProgram.setUniform("lightLevel", 1);
             superchunk.render(vp);
 
-            if (!paused){
-                playerController.tick(deltaTime);
-            }
-
             InputManager::tick();
+
+            MCCPP::tick(deltaTime);
 
             lastTime = glfwGetTime();
 
             framesThisSecond++;
-            timeSpent+=glfwGetTime()-currentTime;
+            double newTime = glfwGetTime()-currentTime;
+            timeSpent+=newTime;
+            if (newTime>longestFrame){
+                longestFrame = newTime;
+            }
 
             if (glfwGetTime()-lastSecond>=1.0){
                 framesPerSecond = framesThisSecond;
                 avgFrameTime = (timeSpent/framesThisSecond)*1000.0;
-                CORE_INFO("{} FPS, {} ms avg. frame time, {} ms total time spent", framesPerSecond, avgFrameTime, timeSpent*1000);
+                CORE_INFO("{} FPS, {} ms avg. frame time, {} ms total time spent. Longest was {} ms", framesPerSecond, avgFrameTime, timeSpent*1000, longestFrame*1000);
+                CORE_INFO("In chunk {} {} {}", std::trunc(MCCPP::playerController->getPos().x/16), std::trunc(MCCPP::playerController->getPos().y/16), std::trunc(MCCPP::playerController->getPos().z/16));
                 timeSpent = 0;
                 framesThisSecond = 0;
+                longestFrame = 0;
                 lastSecond = glfwGetTime();
             }
 
@@ -162,7 +217,8 @@ int main() {
             glfwPollEvents();
         }
 
-
+        NetworkManager::cleanup();
+        http::cleanup();
 
         glfwTerminate();
     }catch (std::exception& e){

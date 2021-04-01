@@ -25,7 +25,10 @@ public:
 class Chunk {
 private:
     Block* block[CX][CY][CZ];
+    uint32_t lightLevel[CX][CY][CZ];
+    uint32_t lightLevelsCorrected[CX][CY][CZ];
     GLuint vbo;
+    GLuint textureID;
     uint32_t elements;
     bool changed;
     ShaderProgram& shaderProgram;
@@ -37,6 +40,10 @@ private:
     Chunk* chunkNegY;
     Chunk* chunkPosZ;
     Chunk* chunkNegZ;
+
+    void makeLightTexture();
+
+    void updateLightTexture();
 public:
     Chunk(ShaderProgram &shaderProgram1, Chunk *chunkPosX, Chunk *chunkNegX, Chunk *chunkPosY, Chunk *chunkNegY,
           Chunk *chunkPosZ, Chunk *chunkNegZ);
@@ -53,6 +60,7 @@ public:
 
     void render();
 
+
     void cleanup();
 
     void makeNeedUpdate(Chunk* chunkPosX,Chunk* chunkNegX,Chunk* chunkPosY,Chunk* chunkNegY,Chunk* chunkPosZ,Chunk* chunkNegZ);
@@ -68,6 +76,8 @@ public:
     int32_t getPosZ() const;
 
     void setPosZ(int32_t posZ);
+
+    void setLightLevels(uint8_t* lightLevelsEncoded, uint8_t* lightLevelsEncodedBlock);
 };
 
 

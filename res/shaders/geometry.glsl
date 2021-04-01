@@ -36,12 +36,12 @@ void main() {
 
     normal = normalize(cross(a.xyz - b.xyz, b.xyz - c.xyz));
 
-    texcoord = a; gl_Position = vp * m * vec4(a.xyz, 1); positionFrag = (m*a).xyz; EmitVertex();
-    texcoord = c; gl_Position = vp * m * vec4(c.xyz, 1); positionFrag = (m*c).xyz; EmitVertex();
-    texcoord = d; gl_Position = vp * m * vec4(d.xyz, 1); positionFrag = (m*d).xyz; EmitVertex();
+    texcoord = a; gl_Position = vp * m * vec4(a.xyz, 1); positionFrag = a.xyz; EmitVertex();
+    texcoord = d; gl_Position = vp * m * vec4(d.xyz, 1); positionFrag = d.xyz; EmitVertex();
+    texcoord = c; gl_Position = vp * m * vec4(c.xyz, 1); positionFrag = c.xyz; EmitVertex();
 
-    texcoord = d; gl_Position = vp * m * vec4(d.xyz, 1); positionFrag = (m*d).xyz; EmitVertex();
-    texcoord = b; gl_Position = vp * m * vec4(b.xyz, 1); positionFrag = (m*b).xyz; EmitVertex();
-    texcoord = a; gl_Position = vp * m * vec4(a.xyz, 1); positionFrag = (m*a).xyz; EmitVertex();
+    texcoord = a; gl_Position = vp * m * vec4(a.xyz, 1); positionFrag = a.xyz; EmitVertex();
+    texcoord = d; gl_Position = vp * m * vec4(d.xyz, 1); positionFrag = d.xyz; EmitVertex();
+    texcoord = b; gl_Position = vp * m * vec4(b.xyz, 1); positionFrag = b.xyz; EmitVertex();
     EndPrimitive();
 }

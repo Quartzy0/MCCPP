@@ -9,6 +9,7 @@
 #include <iostream>
 #include "Superchunk.h"
 #include "../MCCPP.h"
+#include "../PlayerController.h"
 
 Superchunk::Superchunk(ShaderProgram &shaderProgram) : shaderProgram(shaderProgram) {
     chunk_list = std::unordered_map<chunk_pos, Chunk*>{};
@@ -68,29 +69,15 @@ void Superchunk::set(int32_t x, int32_t y, int32_t z, Block* type) {
         --cz;
     }
 
-    Chunk* chunk = getChunkAt(cx, cy, cz);
-    if(!chunk){
-        Chunk* newChunk = new Chunk(shaderProgram, getChunkAt(cx+1, cy, cz), getChunkAt(cx-1, cy, cz),
-                                      getChunkAt(cx, cy+1, cz), getChunkAt(cx, cy-1, cz),
-                                      getChunkAt(cx, cy, cz-1), getChunkAt(cx, cy, cz-1));
-        newChunk->setPosX(cx);
-        newChunk->setPosY(cy);
-        newChunk->setPosZ(cz);
-        newChunk->set(x1, y1, z1, type);
-        chunk_list[{cx,cy,cz}] = newChunk;
-    }else{
-        chunk->set(x1, y1, z1, type);
-    }
+    Chunk* chunk = getOrMakeChunk(cx, cy, cz);
 
-    if (getChunkAt(cx+1, cy, cz))updateChunk(cx+1, cy, cz);
-    if (getChunkAt(cx-1, cy, cz))updateChunk(cx-1, cy, cz);
-    if (getChunkAt(cx, cy+1, cz))updateChunk(cx, cy+1, cz);
-    if (getChunkAt(cx, cy-1, cz))updateChunk(cx, cy-1, cz);
-    if (getChunkAt(cx, cy, cz+1))updateChunk(cx, cy, cz+1);
-    if (getChunkAt(cx, cy, cz-1))updateChunk(cx, cy, cz-1);
+    chunk->set(x1, y1, z1, type);
+
+    updateNearbyChunks(cx, cy, cz);
 }
 
 void Superchunk::render(glm::mat4 vp) {
+    shaderProgram.bind();
     for(auto chunkE : chunk_list){
         Chunk* chunk = chunkE.second;
         if (chunk) {
@@ -130,20 +117,24 @@ void Superchunk::updateChunk(int32_t x, int32_t y, int32_t z) {
     }
 }
 
-Chunk *Superchunk::getChunk(int32_t x, int32_t y, int32_t z) {
-    /*if (last != nullptr){
-        if (last->getPosX()==x && last->getPosY()==y && last->getPosZ()==z){
-            return last;
-        }
-    }
-//    auto foundChunk = std::find_if(std::execution::seq, chunks.begin(), chunks.end(), [x,y,z](Chunk* chunkIn){
-//        return chunkIn->getPosX()==x && chunkIn->getPosY()==y && chunkIn->getPosZ()==z;
-//    });
-    for (Chunk* chunk : chunks){
-        if (chunk->getPosX()==x && chunk->getPosY()==y && chunk->getPosZ()==z){
-            last = chunk;
-            return chunk;
-        }
-    }
-    return nullptr;*/
+Chunk *Superchunk::getOrMakeChunk(int32_t cx, int32_t cy, int32_t cz) {
+    Chunk* chunk = getChunkAt(cx, cy, cz);
+    if (chunk) return chunk;
+    Chunk* newChunk = new Chunk(shaderProgram, getChunkAt(cx+1, cy, cz), getChunkAt(cx-1, cy, cz),
+                                getChunkAt(cx, cy+1, cz), getChunkAt(cx, cy-1, cz),
+                                getChunkAt(cx, cy, cz-1), getChunkAt(cx, cy, cz-1));
+    newChunk->setPosX(cx);
+    newChunk->setPosY(cy);
+    newChunk->setPosZ(cz);
+    chunk_list[{cx,cy,cz}] = newChunk;
+    return newChunk;
+}
+
+void Superchunk::updateNearbyChunks(int32_t cx, int32_t cy, int32_t cz) {
+    if (getChunkAt(cx+1, cy, cz))updateChunk(cx+1, cy, cz);
+    if (getChunkAt(cx-1, cy, cz))updateChunk(cx-1, cy, cz);
+    if (getChunkAt(cx, cy+1, cz))updateChunk(cx, cy+1, cz);
+    if (getChunkAt(cx, cy-1, cz))updateChunk(cx, cy-1, cz);
+    if (getChunkAt(cx, cy, cz+1))updateChunk(cx, cy, cz+1);
+    if (getChunkAt(cx, cy, cz-1))updateChunk(cx, cy, cz-1);
 }

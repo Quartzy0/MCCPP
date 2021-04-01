@@ -12,17 +12,6 @@
 #include <unordered_map>
 #include <glm/glm.hpp>
 
-struct PointLight{
-    glm::vec3 color;
-    glm::vec3 position;
-
-    float ambient;
-
-    float constantAtt;
-    float linearAtt;
-    float quadAtt;
-};
-
 class ShaderProgram {
 private:
     uint32_t program = 0;
@@ -38,8 +27,6 @@ private:
         GLint stride;
         const void* offset;
     };
-
-    uint32_t pointLightCount;
 
     std::vector<VertexAttribute> vertexAttributes;
 
@@ -57,7 +44,7 @@ public:
 
     ShaderProgram(const char* sourceVertex, const char* sourceGeometry, const char* sourceFragment);
 
-    bool init(uint32_t pointLightCount);
+    bool init();
 
     void cleanup() const;
 
@@ -80,7 +67,7 @@ public:
 
     void setUniform(const char* name, GLsizei count, const GLint* value);
 
-    void setPointLights(PointLight* pointLight, size_t count);
+    void setUniformLightLevels(uint32_t *lightLevels, size_t size);
 };
 
 #endif //MCCPP_SHADERPROGRAM_H

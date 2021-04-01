@@ -7,7 +7,15 @@
 
 #include "spdlog/spdlog.h"
 
-namespace MCCPP{
+#ifdef WIN32
+#include <windows.h>
+#else
+#include <termios.h>
+#include <unistd.h>
+#endif
+
+void SetStdinEcho(bool enable = true);
+
 
 class Log {
 public:
@@ -19,8 +27,6 @@ public:
     static std::shared_ptr<spdlog::logger> clientLogger;
     static std::shared_ptr<spdlog::logger> coreLogger;
 };
-
-}
 
 #ifdef NDEBUG
 
@@ -38,17 +44,17 @@ public:
 
 #else
 
-#define CORE_FATAL(...) MCCPP::Log::getCoreLogger()->fatal(__VA_ARGS__)
-#define CORE_ERROR(...) MCCPP::Log::getCoreLogger()->error(__VA_ARGS__)
-#define CORE_WARN(...) MCCPP::Log::getCoreLogger()->warn(__VA_ARGS__)
-#define CORE_INFO(...) MCCPP::Log::getCoreLogger()->info(__VA_ARGS__)
-#define CORE_TRACE(...) MCCPP::Log::getCoreLogger()->trace(__VA_ARGS__)
+#define CORE_FATAL(...) Log::getCoreLogger()->fatal(__VA_ARGS__)
+#define CORE_ERROR(...) Log::getCoreLogger()->error(__VA_ARGS__)
+#define CORE_WARN(...) Log::getCoreLogger()->warn(__VA_ARGS__)
+#define CORE_INFO(...) Log::getCoreLogger()->info(__VA_ARGS__)
+#define CORE_TRACE(...) Log::getCoreLogger()->trace(__VA_ARGS__)
 
-#define CLIENT_FATAL(...) MCCPP::Log::getClientLogger()->fatal(__VA_ARGS__)
-#define CLIENT_ERROR(...) MCCPP::Log::getClientLogger()->error(__VA_ARGS__)
-#define CLIENT_WARN(...) MCCPP::Log::getClientLogger()->warn(__VA_ARGS__)
-#define CLIENT_INFO(...) MCCPP::Log::getClientLogger()->info(__VA_ARGS__)
-#define CLIENT_TRACE(...) MCCPP::Log::getClientLogger()->trace(__VA_ARGS__)
+#define CLIENT_FATAL(...) Log::getClientLogger()->fatal(__VA_ARGS__)
+#define CLIENT_ERROR(...) Log::getClientLogger()->error(__VA_ARGS__)
+#define CLIENT_WARN(...) Log::getClientLogger()->warn(__VA_ARGS__)
+#define CLIENT_INFO(...) Log::getClientLogger()->info(__VA_ARGS__)
+#define CLIENT_TRACE(...) Log::getClientLogger()->trace(__VA_ARGS__)
 
 #endif
 
