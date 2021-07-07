@@ -10,8 +10,8 @@ uint32_t network::PacketLoginSuccess::getPacketId() {
     return 2;
 }
 
-uint32_t network::PacketLoginSuccess::encode(uint8_t *out) {
-    return 0;
+void network::PacketLoginSuccess::encode(uint8_t *out) {
+
 }
 
 void network::PacketLoginSuccess::decode(uint8_t *in, size_t size) {

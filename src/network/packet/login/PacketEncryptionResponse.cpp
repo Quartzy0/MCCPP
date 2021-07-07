@@ -12,7 +12,7 @@ uint32_t network::PacketEncryptionResponse::getPacketId() {
     return 1;
 }
 
-uint32_t network::PacketEncryptionResponse::encode(uint8_t *out) {
+void network::PacketEncryptionResponse::encode(uint8_t *out) {
     long l = (long) publicKey.size();
     const unsigned char* data1 = reinterpret_cast<const unsigned char *>(publicKey.data());
     RSA* rsa = d2i_RSA_PUBKEY(NULL, &data1, l);
@@ -43,8 +43,6 @@ uint32_t network::PacketEncryptionResponse::encode(uint8_t *out) {
     i+=encodeVarInt(encryptedToken.length(), out + i);
     std::memcpy(out + i, encryptedToken.data(), encryptedToken.length());
     i+=encryptedToken.length();
-
-    return i;
 }
 
 uint32_t network::PacketEncryptionResponse::size() {

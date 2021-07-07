@@ -13,6 +13,7 @@ struct Keybind{
     uint32_t keycode;
     //Pressed THIS frame
     bool pressed;
+    bool prevPressed;
     //Is key being held down
     bool keyDown;
 };
@@ -34,7 +35,7 @@ public:
 
     static void setCursorEnabled(bool enabled);
 
-    static Keybind addKeybind(uint32_t keybind);
+    static Keybind & addKeybind(uint32_t keybind);
 
     static bool mouse1Pressed;
     static bool mouse2Pressed;

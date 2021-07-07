@@ -9,8 +9,8 @@ uint32_t network::PacketServerDifficulty::getPacketId() {
     return 0x41;
 }
 
-uint32_t network::PacketServerDifficulty::encode(uint8_t *out) {
-    return 0;
+void network::PacketServerDifficulty::encode(uint8_t *out) {
+
 }
 
 void network::PacketServerDifficulty::decode(uint8_t *in, size_t size) {

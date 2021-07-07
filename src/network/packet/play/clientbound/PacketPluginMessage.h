@@ -5,7 +5,7 @@
 #ifndef MCCPP_PACKETPLUGINMESSAGE_H
 #define MCCPP_PACKETPLUGINMESSAGE_H
 
-#include "../Packet.h"
+#include "../../Packet.h"
 #include <vector>
 
 namespace network{
@@ -17,7 +17,7 @@ namespace network{
     public:
         uint32_t getPacketId() override;
 
-        uint32_t encode(uint8_t *out) override;
+        void encode(uint8_t *out) override;
 
         void decode(uint8_t *in, size_t size) override;
 

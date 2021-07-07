@@ -3,16 +3,15 @@
 //
 
 #include "PacketPlayerPosAndLook.h"
-#include "../../../MCCPP.h"
-#include "../../../util/Log.h"
+#include "../../../../MCCPP.h"
 #include <cmath>
 
 uint32_t network::PacketPlayerPosAndLook::getPacketId() {
     return 0x08;
 }
 
-uint32_t network::PacketPlayerPosAndLook::encode(uint8_t *out) {
-    return 0;
+void network::PacketPlayerPosAndLook::encode(uint8_t *out) {
+
 }
 
 void network::PacketPlayerPosAndLook::decode(uint8_t *in, size_t size) {
@@ -42,6 +41,8 @@ void network::PacketPlayerPosAndLook::handlePacket() {
 
         newHorizontal += MCCPP::playerController->getCamera().getHorizontalAngle() * ((flags & 0x08)>0);
         newVertical += MCCPP::playerController->getCamera().getVerticalAngle() * ((flags & 0x10)>0);
+
+        MCCPP::superchunk->updateOffset(newPos.x-MCCPP::superchunk->getRenderDistance()/2.0f, newPos.z-MCCPP::superchunk->getRenderDistance()/2.0f);
 
         MCCPP::playerController->setPos(newPos);
         MCCPP::playerController->getCamera().setHorizontalAngle(newHorizontal);

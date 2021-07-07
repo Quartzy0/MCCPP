@@ -7,14 +7,18 @@
 #include "graphics/Vertex.h"
 #include "util/InputManager.h"
 #include "util/Log.h"
+#ifdef USE_NETWORK
 #include "network/NetworkManager.h"
 #include "network/packet/login/PacketHandshake.h"
 #include "network/packet/login/PacketLoginStart.h"
 #include "network/HTTPRequest.hpp"
-
-#include <glm/gtc/noise.hpp>
+#include "network/packet/play/serverbound/PacketPlayerPosition.h"
 
 using namespace network;
+#endif
+
+#include <fstream>
+
 
 bool paused = false;
 
@@ -57,21 +61,31 @@ int main(int argc, char** argv) {
 //            CORE_ERROR("Need 5 arguments: [Username] [UUID] [AuthToken] [ServerIP] [ServerPort]");
 //            exit(1);
 //        }
+#ifdef USE_NETWORK
         MCCPP::username = std::string{argv[1]};
         MCCPP::uuid = std::string{argv[2]};
         MCCPP::authToken = std::string{argv[3]};
         MCCPP::serverIP = std::string{argv[4]};
         MCCPP::port = to_int(argv[5]);
+#endif
 
 
         Window window = Window("Test", 1280, 720);
         ShaderProgram shaderProgram = ShaderProgram("res/shaders/vertex.glsl", "res/shaders/geometry.glsl", "res/shaders/fragment.glsl");
+
+        shaderProgram.addCompiletimeDefinition("#define RENDER_DISTANCE 20\n");
+        shaderProgram.addCompiletimeDefinition("#define VERTICAL_SIZE 16\n");
 
         shaderProgram.addVertexAttrib(0, 3, GL_BYTE, GL_FALSE, sizeof(Vertex), (const void*) offsetof(Vertex,x));
         shaderProgram.addVertexAttrib(1, 1, GL_SHORT, GL_FALSE, sizeof(Vertex), (const void*) offsetof(Vertex,textureId));
 
         window.init();
         shaderProgram.init();
+
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDebugMessageCallback(debug_callback, nullptr);
 
         Camera camera(window.getWidth(), window.getHeight());
         camera.init(window.getWindow());
@@ -82,7 +96,15 @@ int main(int argc, char** argv) {
         TextureAtlas textureAtlas;
         textureAtlas.load("res/textures/blocks", 64);
 
-        Superchunk superchunk(shaderProgram);
+        //Read compute shader source
+        std::fstream fstream;
+        fstream.open("res/shaders/lighting_compute.glsl");
+        std::ostringstream oss;
+        oss << fstream.rdbuf();
+        fstream.close();
+
+        std::string str = oss.str();
+        Superchunk superchunk(shaderProgram, str, 10);
 
         PlayerController playerController{camera, superchunk, window};
 
@@ -93,16 +115,39 @@ int main(int argc, char** argv) {
 
         Block* stone = Block::getBlockById(1);
         Block* dirt = Block::getBlockById(56);
+        Block* netherrack = Block::getBlockById(87);
+        Block* cobble = Block::getBlockById(4);
 //        superchunk.set(2, 0, 0, stone);
 //        superchunk.set(3, 0, 0, dirt);
 
-        for (int k = 0; k < 10; ++k) {
-            for (int j = 0; j < 10; ++j) {
-                for (int i = 0; i < 10; ++i) {
-                    superchunk.set(i-236, k+32, j+256, stone);
-                }
-            }
-        }
+//        for (int k = 0; k < 16; ++k) {
+//            for (int j = 0; j < 16; ++j) {
+//                for (int i = 0; i < 16; ++i) {
+//                    superchunk.set(i, k, j, stone);
+//                }
+//            }
+//        }
+//        for (int k = 0; k < 16; ++k) {
+//            for (int j = 0; j < 16; ++j) {
+//                for (int i = 0; i < 16; ++i) {
+//                    superchunk.set(i+16, k, j, dirt);
+//                }
+//            }
+//        }
+//        for (int k = 0; k < 16; ++k) {
+//            for (int j = 0; j < 16; ++j) {
+//                for (int i = 0; i < 16; ++i) {
+//                    superchunk.set(i, k, j+16, netherrack);
+//                }
+//            }
+//        }
+//        for (int k = 0; k < 16; ++k) {
+//            for (int j = 0; j < 16; ++j) {
+//                for (int i = 0; i < 16; ++i) {
+//                    superchunk.set(i+16, k, j+16, cobble);
+//                }
+//            }
+//        }
 
 //        All chunks
 //        for (int chunkX = -(SCX/2); chunkX < SCX/2; ++chunkX) {
@@ -125,15 +170,11 @@ int main(int argc, char** argv) {
 
         shaderProgram.bind();
 
-        glEnable(GL_DEBUG_OUTPUT);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        glDebugMessageCallback(debug_callback, nullptr);
 
         CORE_INFO("Initialized successfully");
 
-
+#ifdef USE_NETWORK
         CORE_INFO("Attempting to connect to {}:{}", MCCPP::serverIP, MCCPP::port);
         http::init();
         NetworkManager::init(MCCPP::serverIP.c_str(), MCCPP::port);
@@ -146,6 +187,7 @@ int main(int argc, char** argv) {
 
         PacketLoginStart packetLoginStart{MCCPP::username};
         NetworkManager::sendPacket(packetLoginStart);
+#endif
 
 
 
@@ -160,6 +202,8 @@ int main(int argc, char** argv) {
 
         uint32_t mcTick = 1;
 
+        Keybind& keybindArrowLeft = InputManager::addKeybind(GLFW_KEY_LEFT);
+
         while (!glfwWindowShouldClose(window.getWindow()))
         {
             double currentTime = glfwGetTime();
@@ -168,9 +212,16 @@ int main(int argc, char** argv) {
             glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
             glEnable(GL_DEPTH_TEST);
             glClearColor(0.2, 0.2, 0.2, 1);
+            InputManager::tick();
 
             if (glfwGetKey(window.getWindow(), GLFW_KEY_ESCAPE)){
                 paused = !paused;
+            }
+
+            if (keybindArrowLeft.pressed){
+                PacketPlayerPosition position{-236.0, 64.0, 256.0, false};
+                NetworkManager::sendPacket(position);
+                CORE_TRACE("Left");
             }
 
             textureAtlas.tick(mcTick);
@@ -181,7 +232,6 @@ int main(int argc, char** argv) {
             shaderProgram.setUniform("lightLevel", 1);
             superchunk.render(vp);
 
-            InputManager::tick();
 
             MCCPP::tick(deltaTime);
 
@@ -217,8 +267,12 @@ int main(int argc, char** argv) {
             glfwPollEvents();
         }
 
+        superchunk.cleanup();
+
+#ifdef USE_NETWORK
         NetworkManager::cleanup();
         http::cleanup();
+#endif
 
         glfwTerminate();
     }catch (std::exception& e){

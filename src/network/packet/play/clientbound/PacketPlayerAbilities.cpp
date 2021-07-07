@@ -3,15 +3,15 @@
 //
 
 #include "PacketPlayerAbilities.h"
-#include "../../../MCCPP.h"
-#include "../../../util/Log.h"
+#include "../../../../MCCPP.h"
+#include "../../../../util/Log.h"
 
 uint32_t network::PacketPlayerAbilities::getPacketId() {
     return 0x39;
 }
 
-uint32_t network::PacketPlayerAbilities::encode(uint8_t *out) {
-    return 0;
+void network::PacketPlayerAbilities::encode(uint8_t *out) {
+
 }
 
 void network::PacketPlayerAbilities::decode(uint8_t *in, size_t size) {

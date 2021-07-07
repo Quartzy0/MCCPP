@@ -5,14 +5,14 @@
 #include <iostream>
 #include "PacketPlayerListItem.h"
 
-#include "../../../MCCPP.h"
+#include "../../../../MCCPP.h"
 
 uint32_t network::PacketPlayerListItem::getPacketId() {
     return 0x38;
 }
 
-uint32_t network::PacketPlayerListItem::encode(uint8_t *out) {
-    return 0;
+void network::PacketPlayerListItem::encode(uint8_t *out) {
+
 }
 
 void network::PacketPlayerListItem::decode(uint8_t *in, size_t size) {

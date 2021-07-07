@@ -8,8 +8,8 @@ uint32_t network::PacketJoinGame::getPacketId() {
     return 1;
 }
 
-uint32_t network::PacketJoinGame::encode(uint8_t *out) {
-    return 0;
+void network::PacketJoinGame::encode(uint8_t *out) {
+
 }
 
 void network::PacketJoinGame::decode(uint8_t *in, size_t size) {

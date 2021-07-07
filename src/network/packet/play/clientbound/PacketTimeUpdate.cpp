@@ -3,14 +3,14 @@
 //
 
 #include "PacketTimeUpdate.h"
-#include "../../../MCCPP.h"
+#include "../../../../MCCPP.h"
 
 uint32_t network::PacketTimeUpdate::getPacketId() {
     return 0x03;
 }
 
-uint32_t network::PacketTimeUpdate::encode(uint8_t *out) {
-    return 0;
+void network::PacketTimeUpdate::encode(uint8_t *out) {
+
 }
 
 void network::PacketTimeUpdate::decode(uint8_t *in, size_t size) {

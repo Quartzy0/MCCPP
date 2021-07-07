@@ -57,8 +57,8 @@ namespace network{
         return verifyToken;
     }
 
-    uint32_t PacketEncryptionRequest::encode(uint8_t *out) {
-        return 0;
+    void PacketEncryptionRequest::encode(uint8_t *out) {
+
     }
 
     uint32_t PacketEncryptionRequest::size() {

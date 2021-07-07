@@ -5,7 +5,7 @@
 #ifndef MCCPP_PACKETKEEPALIVE_H
 #define MCCPP_PACKETKEEPALIVE_H
 
-#include "../Packet.h"
+#include "../../Packet.h"
 
 namespace network{
 
@@ -19,7 +19,7 @@ namespace network{
 
         uint32_t getPacketId() override;
 
-        uint32_t encode(uint8_t *out) override;
+        void encode(uint8_t *out) override;
 
         void decode(uint8_t *in, size_t size) override;
 

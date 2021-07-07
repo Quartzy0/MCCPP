@@ -9,8 +9,8 @@ uint32_t network::PacketDisconnect::getPacketId() {
     return 0;
 }
 
-uint32_t network::PacketDisconnect::encode(uint8_t *out) {
-    return 0;
+void network::PacketDisconnect::encode(uint8_t *out) {
+
 }
 
 void network::PacketDisconnect::decode(uint8_t *in, size_t size) {

@@ -2,20 +2,20 @@
 // Created by quartzy on 3/28/21.
 //
 
-#ifndef MCCPP_PACKETSERVERDIFFICULTY_H
-#define MCCPP_PACKETSERVERDIFFICULTY_H
+#ifndef MCCPP_PACKETSPAWNPOSITION_H
+#define MCCPP_PACKETSPAWNPOSITION_H
 
-#include "../Packet.h"
+#include "../../Packet.h"
 
 namespace network{
 
-    class PacketServerDifficulty : public Packet{
+    class PacketSpawnPosition : public Packet{
     private:
-        uint8_t difficulty;
+        int32_t x,y,z;
     public:
         uint32_t getPacketId() override;
 
-        uint32_t encode(uint8_t *out) override;
+        void encode(uint8_t *out) override;
 
         void decode(uint8_t *in, size_t size) override;
 
@@ -26,4 +26,4 @@ namespace network{
 
 }
 
-#endif //MCCPP_PACKETSERVERDIFFICULTY_H
+#endif //MCCPP_PACKETSPAWNPOSITION_H

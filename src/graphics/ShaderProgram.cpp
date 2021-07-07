@@ -25,10 +25,11 @@ ShaderProgram::ShaderProgram(const char* sourceVertex, const char* sourceGeometr
 
 
 bool ShaderProgram::init() {
+
     for (const char* def : compileTimeDefinitions){
-        sourceVertex.insert(18, def);
-        sourceGeometry.insert(63, def);
-        sourceFragment.insert(18, def);
+        sourceVertex.insert(14, def);
+        sourceGeometry.insert(58, def);
+        sourceFragment.insert(71, def);
     }
 
     if (!GLEW_EXT_geometry_shader4){

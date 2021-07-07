@@ -6,9 +6,9 @@
 #define MCCPP_PACKETPLAYERLISTITEM_H
 
 #include <vector>
-#include "../Packet.h"
-#include "../../../PlayerMP.h"
-#include "../../../util/UUID.h"
+#include "../../Packet.h"
+#include "../../../../PlayerMP.h"
+#include "../../../../util/UUID.h"
 
 namespace network{
 
@@ -43,7 +43,7 @@ namespace network{
 
         uint32_t getPacketId() override;
 
-        uint32_t encode(uint8_t *out) override;
+        void encode(uint8_t *out) override;
 
         void decode(uint8_t *in, size_t size) override;
 

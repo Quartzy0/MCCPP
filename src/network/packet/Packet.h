@@ -50,8 +50,7 @@ namespace network {
 
         virtual uint32_t getPacketId() = 0;
 
-        //Return encoded of packet
-        virtual uint32_t encode(uint8_t *out) = 0;
+        virtual void encode(uint8_t *out) = 0;
 
         virtual void decode(uint8_t *in, size_t size) = 0;
 

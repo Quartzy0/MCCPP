@@ -12,13 +12,12 @@ namespace network{
         return 0;
     }
 
-    uint32_t PacketHandshake::encode(uint8_t *out) {
+    void PacketHandshake::encode(uint8_t *out) {
         int i = 0;
         i+=encodeVarInt(protocolVersion, out);
         i+=encodeString(serverAddress.data(), out+i);
         i+=encodeShort(port, out+i);
         i+=encodeVarInt(nextState, out+i);
-        return i;
     }
 
     PacketHandshake::PacketHandshake(uint32_t protocolVersion, std::string& serverAddress, uint16_t port,

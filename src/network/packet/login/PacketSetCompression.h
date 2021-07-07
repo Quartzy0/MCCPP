@@ -18,7 +18,7 @@ namespace network{
 
         void decode(uint8_t *in, size_t size) override;
 
-        uint32_t encode(uint8_t *out) override;
+        void encode(uint8_t *out) override;
 
         uint32_t size() override;
 

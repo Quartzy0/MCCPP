@@ -10,8 +10,8 @@ uint32_t network::PacketLoginStart::getPacketId() {
     return 0;
 }
 
-uint32_t network::PacketLoginStart::encode(uint8_t *out) {
-    return encodeString(username.c_str(), out);
+void network::PacketLoginStart::encode(uint8_t *out) {
+    encodeString(username.c_str(), out);
 }
 
 uint32_t network::PacketLoginStart::size() {

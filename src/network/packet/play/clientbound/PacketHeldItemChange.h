@@ -5,7 +5,7 @@
 #ifndef MCCPP_PACKETHELDITEMCHANGE_H
 #define MCCPP_PACKETHELDITEMCHANGE_H
 
-#include "../Packet.h"
+#include "../../Packet.h"
 
 namespace network{
 
@@ -15,7 +15,7 @@ namespace network{
     public:
         uint32_t getPacketId() override;
 
-        uint32_t encode(uint8_t *out) override;
+        void encode(uint8_t *out) override;
 
         void decode(uint8_t *in, size_t size) override;
 

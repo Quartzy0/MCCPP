@@ -3,15 +3,15 @@
 //
 
 #include "PacketStatistics.h"
-#include "../../../MCCPP.h"
-#include "../../../util/Log.h"
+#include "../../../../MCCPP.h"
+#include "../../../../util/Log.h"
 
 uint32_t network::PacketStatistics::getPacketId() {
     return 0x37;
 }
 
-uint32_t network::PacketStatistics::encode(uint8_t *out) {
-    return 0;
+void network::PacketStatistics::encode(uint8_t *out) {
+
 }
 
 void network::PacketStatistics::decode(uint8_t *in, size_t size) {

@@ -19,6 +19,8 @@ void Block::initBlocks(TextureAtlas& textureAtlas) {
     blocks[1] = Block(textureAtlas, 1, "stone.png");
     blocks[3] = Block(textureAtlas, 3, "dirt.png");
     blocks[56] = Block(textureAtlas, 56, "diamond_ore.png");
+    blocks[87] = Block(textureAtlas, 87, "netherrack.png");
+    blocks[4] = Block(textureAtlas, 4, "cobblestone.png");
 }
 
 Block *Block::getBlockById(uint16_t id) {

@@ -4,14 +4,14 @@
 
 #include <iostream>
 #include "PacketHeldItemChange.h"
-#include "../../../MCCPP.h"
+#include "../../../../MCCPP.h"
 
 uint32_t network::PacketHeldItemChange::getPacketId() {
     return 0x09;
 }
 
-uint32_t network::PacketHeldItemChange::encode(uint8_t *out) {
-    return 0;
+void network::PacketHeldItemChange::encode(uint8_t *out) {
+
 }
 
 void network::PacketHeldItemChange::decode(uint8_t *in, size_t size) {

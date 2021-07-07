@@ -7,20 +7,20 @@
 #include "Chunk.h"
 
 #include "../graphics/Vertex.h"
-#include "../util/Log.h"
 
-#include <algorithm>
-
-Chunk::Chunk(ShaderProgram &shaderProgram1, Chunk *chunkPosX, Chunk *chunkNegX, Chunk *chunkPosY, Chunk *chunkNegY,
-             Chunk *chunkPosZ, Chunk *chunkNegZ)
+Chunk::Chunk(ShaderProgram *shaderProgram1, Chunk *chunkPosX, Chunk *chunkNegX, Chunk *chunkPosY, Chunk *chunkNegY,
+             Chunk *chunkPosZ, Chunk *chunkNegZ, int32_t arrayPosX, int32_t arrayPosY, int32_t arrayPosZ)
         : shaderProgram(shaderProgram1), chunkPosX(chunkPosX), chunkNegX(chunkNegX), chunkPosY(chunkPosY),
-          chunkNegY(chunkNegY), chunkPosZ(chunkPosZ), chunkNegZ(chunkNegZ) {
+          chunkNegY(chunkNegY), chunkPosZ(chunkPosZ), chunkNegZ(chunkNegZ), arrayPosX(arrayPosX), arrayPosY(arrayPosY), arrayPosZ(arrayPosZ) {
     std::memset(block, 0, sizeof(block));
     elements = 0;
     changed = true;
+    glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
 
-    makeLightTexture();
+    posX = INT32_MAX;
+    posY = INT32_MAX;
+    posZ = INT32_MAX;
 }
 
 Chunk::~Chunk() {
@@ -187,6 +187,7 @@ void Chunk::update() {
     }
 
     elements = i;
+    glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, elements * sizeof(Vertex), vertex, GL_STATIC_DRAW);
 }
@@ -204,23 +205,21 @@ void Chunk::render() {
 //    glFrontFace(GL_CCW);
 //    glCullFace(GL_BACK);
 
-    glBindVertexArray(0);
+    glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    shaderProgram.specifyVertexAttributes();
+    shaderProgram->specifyVertexAttributes();
 
 //    shaderProgram.setUniformLightLevels(&lightLevel[0][0][0], CX*CY*CZ);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_3D, textureID);
-    shaderProgram.setUniform("lightLevel", 1);
+//    glActiveTexture(GL_TEXTURE1);
+//    glBindTexture(GL_TEXTURE_3D, bufferId);
+    shaderProgram->setUniform("lightLevel", 1);
 
     glDrawArrays(GL_LINES, 0, elements);
 }
 
 void Chunk::cleanup() {
     glDeleteBuffers(1, &vbo);
-
-    glBindTexture(GL_TEXTURE_3D, 0);
-    glDeleteTextures(1, &textureID);
+    glDeleteVertexArrays(1, &vao);
 }
 
 void Chunk::makeNeedUpdate(Chunk* chunkPosX,Chunk* chunkNegX,Chunk* chunkPosY,Chunk* chunkNegY,Chunk* chunkPosZ,Chunk* chunkNegZ) {
@@ -257,51 +256,18 @@ void Chunk::setPosZ(int32_t posZ) {
     Chunk::posZ = posZ;
 }
 
-void Chunk::setLightLevels(uint8_t *lightLevelsEncoded, uint8_t* lightLevelsEncodedBlock) {
-    struct LightPair{
-        uint8_t l1:4;
-        uint8_t l2:4;
-    };
-    for (int y = 0; y < CY; ++y) {
-        for (int x = 0; x < CX; ++x) {
-            for (int z = 0; z < CZ; ++z) {
-                LightPair* lightPair = (LightPair*) lightLevelsEncodedBlock + (y << 8 | z << 4 | x);
-                lightLevel[x][y][z++] = lightPair->l1 << 4;
-                lightLevel[x][y][z] = lightPair->l2 << 4;
-            }
-        }
-    }
-    for (int x = 0; x < CX; ++x) {
-        for (int y = 0; y < CY; ++y) {
-            for (int z = 0; z < CZ; ++z) {
-                uint32_t lightLevelUp = lightLevel[x][y+1][z];
-                uint32_t lightLevelNorth = lightLevel[x][y][z+1];
-                uint32_t lightLevelSouth = lightLevel[x][y][z-1];
-                uint32_t lightLevelWest = lightLevel[x+1][y][z];
-                uint32_t lightLevelEast = lightLevel[x-1][y][z];
+void Chunk::init() {
 
-                lightLevelsCorrected[x][y][z] = std::max({lightLevelUp, lightLevelSouth, lightLevelNorth, lightLevelEast, lightLevelWest});
-            }
-        }
-    }
-    updateLightTexture();
 }
 
-void Chunk::makeLightTexture() {
-    glActiveTexture(GL_TEXTURE1);
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_3D, textureID);
-
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_RED, 16, 16, 16, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
+int32_t Chunk::getArrayPosX() const {
+    return arrayPosX;
 }
 
-void Chunk::updateLightTexture() {
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_3D, textureID);
-    glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, 16, 16, 16, GL_RED, GL_UNSIGNED_BYTE, lightLevelsCorrected);
+int32_t Chunk::getArrayPosY() const {
+    return arrayPosY;
+}
+
+int32_t Chunk::getArrayPosZ() const {
+    return arrayPosZ;
 }

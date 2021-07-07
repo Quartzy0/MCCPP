@@ -5,10 +5,10 @@
 #include "MCCPP.h"
 
 std::queue<std::packaged_task<void()>> MCCPP::queue;
+std::mutex MCCPP::taskQueueMutex;
+
 
 std::vector<PlayerMP> MCCPP::players;
-
-std::mutex MCCPP::taskQueueMutex;
 std::string MCCPP::username;
 std::string MCCPP::uuid;
 std::string MCCPP::authToken;

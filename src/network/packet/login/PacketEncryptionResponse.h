@@ -25,7 +25,7 @@ namespace network{
 
         uint32_t getPacketId() override;
 
-        uint32_t encode(uint8_t *out) override;
+        void encode(uint8_t *out) override;
 
         void handlePacket() override;
 

@@ -3,8 +3,8 @@
 //
 
 #include "PacketMapChunkBulk.h"
-#include "../../../util/Log.h"
-#include "../../../MCCPP.h"
+#include "../../../../util/Log.h"
+#include "../../../../MCCPP.h"
 
 bool network::PacketMapChunkBulk::first;
 
@@ -12,8 +12,8 @@ uint32_t network::PacketMapChunkBulk::getPacketId() {
     return 0x26;
 }
 
-uint32_t network::PacketMapChunkBulk::encode(uint8_t *out) {
-    return 0;
+void network::PacketMapChunkBulk::encode(uint8_t *out) {
+
 }
 
 void network::PacketMapChunkBulk::decode(uint8_t *in, size_t size) {
@@ -71,21 +71,34 @@ void network::PacketMapChunkBulk::handlePacket() {
     std::vector<ChunkColumn> chunks = chunkData;
     auto task = std::packaged_task<void()>{[chunks](){
         Block* dirt = Block::getBlockById(3);
+        Block* stone = Block::getBlockById(1);
+//        static bool f = true;
         for (int i = 0; i < chunks.size(); ++i) {
             ChunkColumn column = chunks[i];
             for (int k = 0; k < 16; ++k) {
                 if (column.bitMask & (1 << k)){
                     Chunk* chunk = MCCPP::superchunk->getOrMakeChunk(column.chunkX, k, column.chunkZ);
+                    if (!chunk) continue;
+//                    if (f){
+//                        MCCPP::playerController->setPos(glm::vec<3, double, glm::defaultp>{column.chunkX*16, k*16, column.chunkZ*16});
+//                        f = false;
+//                    }
                     for (int y = 0; y < 16; ++y) {
                         for (int x = 0; x < 16; ++x) {
                             for (int z = 0; z < 16; ++z) {
-                                if (column.chunks[k].blockIds[y << 8 | z << 4 | x]!=0){
+                                /*
+                                 *  ID              Meta
+                                 *  V                V
+                                 * 100110010010     1101
+                                 */
+                                if ((column.chunks[k].blockIds[y << 8 | z << 4 | x] >> 4)==50){
                                     chunk->set(x, y, z, dirt);
+                                }else if((column.chunks[k].blockIds[y << 8 | z << 4 | x] >> 4)!=0){
+                                    chunk->set(x, y, z, stone);
                                 }
                             }
                         }
                     }
-                    chunk->setLightLevels(column.chunks[k].skylightLevels, column.chunks[k].lightLevels);
                     MCCPP::superchunk->updateNearbyChunks(column.chunkX, k, column.chunkZ);
                 }
             }

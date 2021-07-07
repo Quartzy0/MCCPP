@@ -14,25 +14,18 @@
 #define CY 16
 #define CZ 16
 
-class Position{
-public:
-    int32_t x, y ,z;
-
-    Position() = default;
-    ~Position() = default;
-};
-
 class Chunk {
+    friend class Superchunk;
 private:
     Block* block[CX][CY][CZ];
-    uint32_t lightLevel[CX][CY][CZ];
-    uint32_t lightLevelsCorrected[CX][CY][CZ];
     GLuint vbo;
-    GLuint textureID;
+    GLuint vao;
+    GLuint bufferId;
     uint32_t elements;
     bool changed;
-    ShaderProgram& shaderProgram;
+    ShaderProgram* shaderProgram;
     int32_t posX,posY,posZ;
+    int32_t arrayPosX, arrayPosY, arrayPosZ;
 
     Chunk* chunkPosX;
     Chunk* chunkNegX;
@@ -40,17 +33,20 @@ private:
     Chunk* chunkNegY;
     Chunk* chunkPosZ;
     Chunk* chunkNegZ;
-
-    void makeLightTexture();
-
-    void updateLightTexture();
 public:
-    Chunk(ShaderProgram &shaderProgram1, Chunk *chunkPosX, Chunk *chunkNegX, Chunk *chunkPosY, Chunk *chunkNegY,
-          Chunk *chunkPosZ, Chunk *chunkNegZ);
+    static void init();
+
+    Chunk(ShaderProgram *shaderProgram1, Chunk *chunkPosX, Chunk *chunkNegX, Chunk *chunkPosY, Chunk *chunkNegY,
+          Chunk *chunkPosZ, Chunk *chunkNegZ, int32_t arrayPosX, int32_t arrayPosY, int32_t arrayPosZ);
 
     Chunk() = default;
 
     ~Chunk();
+
+    Chunk(const Chunk& other) = default;
+    Chunk(Chunk&& other) = delete;
+    Chunk& operator=(const Chunk& other) = delete;
+    Chunk& operator=(Chunk&& other) = delete;
 
     Block* get(uint32_t x, uint32_t y, uint32_t z);
 
@@ -77,7 +73,11 @@ public:
 
     void setPosZ(int32_t posZ);
 
-    void setLightLevels(uint8_t* lightLevelsEncoded, uint8_t* lightLevelsEncodedBlock);
+    int32_t getArrayPosX() const;
+
+    int32_t getArrayPosY() const;
+
+    int32_t getArrayPosZ() const;
 };
 
 

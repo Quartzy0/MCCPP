@@ -3,14 +3,14 @@
 //
 
 #include "PacketKeepAlive.h"
-#include "../../NetworkManager.h"
+#include "../../../NetworkManager.h"
 
 uint32_t network::PacketKeepAlive::getPacketId() {
     return 0x00;
 }
 
-uint32_t network::PacketKeepAlive::encode(uint8_t *out) {
-    return encodeVarInt(keepAliveId, out);
+void network::PacketKeepAlive::encode(uint8_t *out) {
+    encodeVarInt(keepAliveId, out);
 }
 
 void network::PacketKeepAlive::decode(uint8_t *in, size_t size) {

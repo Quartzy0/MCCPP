@@ -1,4 +1,4 @@
-#version 330 core
+#version 430
 
 layout(location=0) in vec3 coord3d;
 layout(location=1) in float textureId;

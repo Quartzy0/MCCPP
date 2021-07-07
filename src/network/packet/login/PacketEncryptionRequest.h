@@ -31,7 +31,7 @@ namespace network{
 
         const std::vector<uint8_t> &getPublicKey() const;
 
-        uint32_t encode(uint8_t *out) override;
+        void encode(uint8_t *out) override;
 
         uint32_t size() override;
 

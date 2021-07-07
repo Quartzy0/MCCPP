@@ -3,6 +3,7 @@
 //
 
 #include "InputManager.h"
+#include "Log.h"
 
 std::vector<Keybind> InputManager::keybinds;
 GLFWwindow* InputManager::window;
@@ -12,20 +13,22 @@ bool InputManager::mouse1Pressed_prev;
 bool InputManager::mouse2Pressed_prev;
 
 void InputManager::key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    for (Keybind keybind : keybinds){
+    for (Keybind& keybind : keybinds){
         if (key == keybind.keycode && action == GLFW_PRESS){
-            keybind.pressed = true;
             keybind.keyDown = true;
+            CORE_TRACE("Key {} pressed", key);
         }
         if (key == keybind.keycode && action == GLFW_RELEASE){
             keybind.keyDown = false;
+            CORE_TRACE("Key {} released", key);
         }
     }
 }
 
 void InputManager::tick() {
-    for(Keybind keybind : keybinds){
-        keybind.pressed = false;
+    for(Keybind& keybind : keybinds){
+        keybind.pressed = keybind.keyDown && !keybind.prevPressed;
+        keybind.prevPressed = keybind.keyDown;
     }
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1)==GLFW_PRESS && !mouse1Pressed_prev){
         mouse1Pressed = true;
@@ -50,6 +53,7 @@ void InputManager::setCursorEnabled(bool enabled) {
     glfwSetInputMode(window, GLFW_CURSOR, enabled ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
 }
 
-Keybind InputManager::addKeybind(uint32_t keybind) {
-    keybinds.push_back(Keybind{keybind, false, false});
+Keybind & InputManager::addKeybind(uint32_t keybind) {
+    Keybind keybind1{keybind, false, false, false};
+    return keybinds.emplace_back(keybind1);
 }

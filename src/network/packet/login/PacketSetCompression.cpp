@@ -21,8 +21,8 @@ int32_t network::PacketSetCompression::getThreshold() const {
     return threshold;
 }
 
-uint32_t network::PacketSetCompression::encode(uint8_t *out) {
-    return 0;
+void network::PacketSetCompression::encode(uint8_t *out) {
+
 }
 
 uint32_t network::PacketSetCompression::size() {

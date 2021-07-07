@@ -9,8 +9,8 @@ uint32_t network::PacketPluginMessage::getPacketId() {
     return 0x3F;
 }
 
-uint32_t network::PacketPluginMessage::encode(uint8_t *out) {
-    return 0;
+void network::PacketPluginMessage::encode(uint8_t *out) {
+
 }
 
 void network::PacketPluginMessage::decode(uint8_t *in, size_t size) {
